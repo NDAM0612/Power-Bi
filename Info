@@ -1,0 +1,44 @@
+Punto 8
+Gobierno y Cobertura de Aplicaciones
+ 
+Objetivo
+Entender el estado de madurez de la gestión de identidades internas, su nivel de cobertura y el valor que está generando para el banco.
+ 
+Contexto: La gestión de identidades constituye uno de los principales habilitadores de control, orden, gobierno y reducción de riesgo, Actualmente se requiere visibilidad completa del programa para los distintos stakeholders de la organización, así también hacia la interna de la Gerencia. La cobertura constituye uno de los principales indicadores de madurez operacional y de reducción de riesgo.
+ Ok (Identificacion de data y prioridad)
+ 
+Solicitar reporte y ubicación de datos para
+•	Inventario de aplicaciones.
+•	Aplicaciones cubiertas.
+•	Aplicaciones pendientes.
+•	Aplicaciones críticas.(A, B y C)
+•	Riesgos asociados. 
+ 
+Preguntas Clave
+•	¿Qué porcentaje del banco está cubierto? Relacionado a la administración
+•	¿Cómo respondemos a la actual demanda, modelo conceptual de operación?
+•	¿Como nos preparamos con modelo de cara al futuro, bajo que riesgos y beneficios?
+•	¿Dónde están las brechas? Enfocada a a las aplicaciones que están fuera del radar y pendientes
+•	¿Qué aplicaciones presentan mayor riesgo?
+•	¿Cuál es el roadmap de incorporación? Road map por prioridad
+•	¿Qué parte de esta unidad se dedica a resolver la demanda operativa y cual a la transformación de la unidad?
+•	¿Cuál es la misión, la visión y si hay un plan director para cumplirlo?
+ 
+ 
+Riesgos
+•	Aplicaciones sin gobierno.
+•	Riesgo de accesos. (Bidireccional -Usuario Final y Gobierno)
+•	Cobertura parcial.
+•	Riesgo residual desconocido.
+ 
+Resultado Esperado
+Mapa consolidado de cobertura de toda la organización, y un modelo conceptual de la generación de las diferentes demandas
+ 
+Dashboard Ejecutivo
+•	Aplicaciones totales
+•	Aplicaciones cubiertas
+•	Aplicaciones pendientes
+•	Cobertura crítica
+•	Áreas con más solicitudes con diferentes graficas (ticket promedio, tiempo invertido, etc.
+•	Evolución mensual
+
