@@ -5,148 +5,130 @@ Actúa como un equipo multidisciplinario conformado por:
 • Creador de Sistemas Tipográficos
 • Auditor de Diseño
 
-Todos son especialistas en dashboards ejecutivos, experiencia de usuario, visualización de datos, gestión de identidades, gobierno de accesos y comunicación estratégica para comités gerenciales.
+Todos son especialistas en dashboards ejecutivos, experiencia de usuario, visualización de datos, gestión de identidades, gobierno de accesos, Identity Governance Administration (IGA) y comunicación estratégica para comités gerenciales.
 
-Voy a proporcionarte un archivo con información relacionada con el proceso de Planificación de Usuarios Externos. Analiza exhaustivamente la información y diseña una imagen ejecutiva de alto impacto visual destinada a gerentes, líderes de tecnología, seguridad de la información y responsables de gobierno de identidades.
+Voy a proporcionarte un archivo con información relacionada con el proceso de certificación y gestión de Entitlements. Analiza exhaustivamente la información y diseña una imagen ejecutiva de alto impacto visual dirigida a Gerentes, líderes de Tecnología, Seguridad de la Información, Riesgo Operacional y responsables de Gobierno de Identidades.
 
 OBJETIVO DEL DASHBOARD
 
-Representar visualmente el avance de la certificación de usuarios externos mediante dos procesos consecutivos:
-
-PRIMERA ETAPA
-Certificación de Estructuras.
-
-SEGUNDA ETAPA
-Certificación de Roles.
-
-La imagen debe comunicar claramente el estado actual del programa, el cumplimiento alcanzado, los pendientes existentes y las oportunidades de gestión.
+Representar de forma clara, ejecutiva y visual el estado del proceso de gestión de Entitlements, mostrando el avance de cada fase, la distribución de los entitlements gestionados y los principales hallazgos para la toma de decisiones.
 
 CONTEXTO DEL NEGOCIO
 
-El campo "Usuarios" representa el objetivo o universo esperado para certificar.
+El archivo contiene una columna denominada "Estado", la cual representa la fase actual de cada grupo de Entitlements dentro del proceso.
 
-El proceso se ejecuta en dos fases:
+Los estados posibles son:
 
-FASE 1: Estructuras
-- Estado ESTRUCTURA indica el progreso de la revisión.
-- Los estados pueden encontrarse como:
-  • NO INICIADO
-  • EN PROCESO
-  • COMPLETADO
+• Sin Iniciar
+• Proceso
+• Enviado
+• Completo
 
-- La columna "Usuarios Certificados (Estructuras)" representa la cantidad efectivamente certificada respecto al objetivo definido en "Usuarios".
+Además, existe una columna denominada "Cantidad de Entitlements", la cual representa el volumen de Entitlements asociado a cada estado y será utilizada para medir la carga, avance y distribución del proceso.
 
-FASE 2: Roles
-- Se ejecuta una vez completada la etapa de Estructuras.
-- Estado ROLES indica el avance de la segunda etapa.
-- Los estados pueden encontrarse como:
-  • NO INICIADO
-  • EN PROCESO
-  • COMPLETADO
+El objetivo principal es comprender:
 
-- La columna "Usuarios Asociados al Rol" representa la cantidad de usuarios que ya cuentan con la validación o asociación correspondiente dentro del proceso de roles.
+• Cuántos Entitlements existen en total.
+• En qué fase se encuentran.
+• Cuál es el volumen ya gestionado.
+• Cuál es el volumen pendiente.
+• Dónde se concentran los mayores esfuerzos de revisión.
+• Qué riesgos o retrasos podrían existir.
 
 COMO DECODIFICADOR DE RESÚMENES
 
-• Identifica hallazgos relevantes.
-• Detecta niveles de avance y rezago.
-• Resume la situación general en mensajes ejecutivos.
-• Identifica áreas críticas.
-• Genera insights que permitan priorizar acciones.
-• Detecta entidades o categorías con mejor y peor desempeño.
-• Propón indicadores adicionales que aporten valor estratégico.
-• Construye una narrativa que permita entender rápidamente el estado del programa.
+• Identifica patrones y tendencias.
+• Detecta concentraciones significativas de Entitlements.
+• Resume la situación general en mensajes ejecutivos de fácil comprensión.
+• Identifica riesgos operativos derivados de acumulaciones en determinadas fases.
+• Genera insights relevantes para la toma de decisiones.
+• Propón indicadores adicionales que permitan comprender mejor el desempeño del proceso.
+• Construye una narrativa ejecutiva que explique claramente el estado del programa.
 
 COMO ARQUITECTO DE MAQUETACIÓN
 
 • Diseña una experiencia visual orientada a comités ejecutivos.
-• Organiza la información siguiendo una lógica de recorrido natural.
-• Muestra claramente la relación entre las dos etapas del proceso.
-• Prioriza métricas de avance y cumplimiento.
-• Diseña visualizaciones que reflejen flujo, transición y progreso entre fases.
-• Puede incorporar embudos, roadmaps, indicadores de madurez, semáforos, scorecards o cualquier elemento que facilite la comprensión ejecutiva.
-• Tiene libertad para proponer visualizaciones innovadoras que generen mayor impacto.
+• Organiza la información de forma que explique el flujo del proceso desde Sin Iniciar hasta Completo.
+• Diseña visualizaciones que permitan comprender rápidamente dónde se encuentran los Entitlements.
+• Utiliza gráficos modernos, embudos, indicadores de avance, scorecards, diagramas de flujo o cualquier visualización innovadora que aporte claridad.
+• Prioriza la comprensión del estado general del programa y los puntos de atención.
 
 COMO CREADOR DE SISTEMAS TIPOGRÁFICOS
 
-• Define una jerarquía visual clara.
-• Prioriza KPIs de avance, cumplimiento y pendientes.
-• Utiliza títulos ejecutivos modernos.
-• Resalta hallazgos, riesgos y oportunidades.
-• Minimiza textos extensos.
-• Favorece una lectura rápida en menos de 30 segundos.
+• Define una jerarquía visual clara y elegante.
+• Prioriza la lectura rápida en menos de 30 segundos.
+• Resalta métricas críticas e insights relevantes.
+• Utiliza títulos ejecutivos modernos y corporativos.
+• Favorece el uso de elementos visuales sobre bloques extensos de texto.
 
 COMO AUDITOR DE DISEÑO
 
-• Garantiza una experiencia visual limpia.
-• Evita sobrecarga de información.
-• Verifica consistencia visual.
-• Asegura que la información crítica sea visible inmediatamente.
-• Valida accesibilidad y legibilidad.
-• Incorpora recomendaciones visuales que incrementen el valor ejecutivo del dashboard.
+• Garantiza una experiencia visual clara y profesional.
+• Evita saturación visual.
+• Asegura la correcta utilización de colores para representar estados.
+• Verifica consistencia entre métricas, gráficos e iconografía.
+• Incorpora recomendaciones para maximizar la comprensión ejecutiva.
 
 LIBERTAD CREATIVA
 
-No te limites a las métricas descritas.
+No te limites únicamente a los campos proporcionados.
 
 Puedes proponer e incorporar:
 
-• KPIs derivados.
+• KPIs ejecutivos.
+• Indicadores de avance.
 • Indicadores de cumplimiento.
-• Indicadores de ejecución.
-• Indicadores de cobertura.
+• Indicadores de carga operativa.
+• Embudos de proceso.
+• Distribución porcentual de Entitlements.
 • Tendencias.
-• Niveles de madurez.
-• Embudos de avance.
-• Ranking de áreas.
-• Ranking de empresas externas.
-• Distribución de estados.
 • Alertas visuales.
-• Semáforos ejecutivos.
-• Storytelling visual.
-• Insights automáticos.
+• Storytelling ejecutivo.
+• Hallazgos automáticos.
 • Riesgos operativos.
-• Bloqueadores de avance.
-• Oportunidades de aceleración.
+• Cuellos de botella.
+• Semáforos de gestión.
+• Scorecards ejecutivos.
+• Niveles de madurez del proceso.
+• Recomendaciones estratégicas.
 
 ESTILO VISUAL
 
 • Dashboard ejecutivo premium.
 • Nivel Comité Gerencial.
-• Inspirado en Power BI Executive Reports.
+• Inspirado en Power BI Executive Dashboard.
 • Minimalista.
+• Innovador.
 • Moderno.
 • Profesional.
-• Sofisticado.
 • Alta calidad.
-• Infográfico.
 • Visualmente impactante.
-• Orientado completamente a la toma de decisiones.
+• Diseño tipo infografía ejecutiva.
+• Orientado a la toma de decisiones.
 
-UTILIZA ICONOGRAFÍA RELACIONADA CON:
+UTILIZA ICONOGRAFÍA RELACIONADA CON
 
-• Usuarios externos.
-• Organización empresarial.
-• Estructuras organizacionales.
-• Gobierno de accesos.
-• Roles y perfiles.
+• Gestión de accesos.
+• Entitlements.
 • Seguridad de la información.
-• Gestión de identidades.
+• Identidades digitales.
+• Gobierno de accesos.
 • Certificación de accesos.
-• Cumplimiento.
+• Controles de seguridad.
+• Riesgos y cumplimiento.
 
-LA IMAGEN FINAL DEBE RESPONDER EN SEGUNDOS:
+LA IMAGEN FINAL DEBE RESPONDER EN SEGUNDOS
 
-• ¿Cuántos usuarios forman parte del objetivo total?
-• ¿Cuál es el porcentaje de avance de certificación de estructuras?
-• ¿Cuántos usuarios han sido certificados en la primera etapa?
-• ¿Cuántas estructuras están completadas, en progreso y no iniciadas?
-• ¿Qué avance tiene la certificación de roles?
-• ¿Cuántos usuarios ya tienen roles asociados?
-• ¿Dónde se concentran los mayores pendientes?
-• ¿Qué empresas externas presentan mayor avance?
-• ¿Qué empresas externas presentan mayor riesgo?
+• ¿Cuántos Entitlements existen en total?
+• ¿Qué porcentaje se encuentra Sin Iniciar?
+• ¿Qué porcentaje está en Proceso?
+• ¿Qué porcentaje fue Enviado?
+• ¿Qué porcentaje ya está Completo?
+• ¿Dónde se concentran los mayores volúmenes?
+• ¿Cuáles son los principales cuellos de botella?
+• ¿Cuál es el grado de avance general del programa?
+• ¿Qué riesgos operativos existen actualmente?
 • ¿Qué acciones debería priorizar la gerencia?
-• ¿Cuál es el estado general del programa de certificación de usuarios externos?
+• ¿Cuál es el estado general del proceso de gestión de Entitlements?
 
-No te limites a representar datos. Diseña una experiencia visual ejecutiva que explique la historia completa del proceso, resaltando avances, riesgos, bloqueos, cumplimiento y próximos pasos estratégicos.
+No te limites a representar datos. Diseña una experiencia visual ejecutiva que cuente la historia completa del proceso, resaltando avances, riesgos, bloqueos, oportunidades de mejora y los principales mensajes estratégicos que un gerente debería llevarse después de observar la imagen.
