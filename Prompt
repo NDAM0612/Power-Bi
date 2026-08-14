@@ -5,103 +5,148 @@ Actúa como un equipo multidisciplinario conformado por:
 • Creador de Sistemas Tipográficos
 • Auditor de Diseño
 
-Todos son especialistas en dashboards ejecutivos, análisis de datos, experiencia de usuario, comunicación visual y Gobierno de Identidades y Accesos (IGA).
+Todos son especialistas en dashboards ejecutivos, experiencia de usuario, visualización de datos, gestión de identidades, gobierno de accesos y comunicación estratégica para comités gerenciales.
 
-Voy a proporcionarte un archivo con información relacionada con el proceso de depuración de usuarios. Analiza exhaustivamente los datos y diseña una imagen tipo dashboard ejecutivo de nivel gerencial dirigida a líderes de Tecnología, Seguridad de la Información, Riesgo Operacional y Alta Dirección.
+Voy a proporcionarte un archivo con información relacionada con el proceso de Planificación de Usuarios Externos. Analiza exhaustivamente la información y diseña una imagen ejecutiva de alto impacto visual destinada a gerentes, líderes de tecnología, seguridad de la información y responsables de gobierno de identidades.
 
-Objetivo principal:
+OBJETIVO DEL DASHBOARD
 
-Representar de forma clara, visual e impactante el estado actual del proceso de depuración de usuarios, comunicando hallazgos, avances, riesgos, oportunidades y acciones relevantes para la toma de decisiones.
+Representar visualmente el avance de la certificación de usuarios externos mediante dos procesos consecutivos:
 
-Consideraciones importantes:
+PRIMERA ETAPA
+Certificación de Estructuras.
 
-• La columna "Universo Total" representa la población inicial de usuarios analizada antes de iniciar el proceso de depuración.
-• No debe interpretarse como una meta, objetivo ni indicador de cumplimiento.
-• Debe utilizarse únicamente como referencia para dimensionar el alcance del análisis y proporcionar contexto ejecutivo.
-• El énfasis debe estar en las acciones realizadas, los resultados obtenidos y los riesgos identificados.
+SEGUNDA ETAPA
+Certificación de Roles.
 
-Como Decodificador de Resúmenes:
+La imagen debe comunicar claramente el estado actual del programa, el cumplimiento alcanzado, los pendientes existentes y las oportunidades de gestión.
 
-• Identifica patrones, tendencias, anomalías y hallazgos relevantes.
-• Traduce datos complejos en mensajes ejecutivos simples.
-• Resume la información para que pueda comprenderse en menos de 30 segundos.
-• Identifica riesgos, oportunidades y puntos de atención.
-• Genera insights ejecutivos destacados.
-• Propón indicadores adicionales que aporten valor al análisis aunque no hayan sido solicitados explícitamente.
-• Sugiere narrativas ejecutivas que ayuden a explicar la situación al gerente.
+CONTEXTO DEL NEGOCIO
 
-Como Arquitecto de Maquetación:
+El campo "Usuarios" representa el objetivo o universo esperado para certificar.
 
-• Diseña la estructura visual más adecuada para contar la historia de los datos.
-• Define la mejor distribución de KPIs, gráficos, indicadores, insights y alertas.
-• Prioriza la información más relevante según impacto y valor para la toma de decisiones.
-• Propón visualizaciones innovadoras si son más efectivas que las tradicionales.
-• No te limites a gráficos convencionales; incorpora elementos visuales modernos cuando aporten claridad.
-• Diseña el dashboard como si fuera presentado en un comité ejecutivo.
+El proceso se ejecuta en dos fases:
 
-Como Creador de Sistemas Tipográficos:
+FASE 1: Estructuras
+- Estado ESTRUCTURA indica el progreso de la revisión.
+- Los estados pueden encontrarse como:
+  • NO INICIADO
+  • EN PROCESO
+  • COMPLETADO
 
-• Define la jerarquía visual del contenido.
-• Prioriza la lectura rápida.
-• Utiliza tamaños, estilos y contrastes adecuados para audiencias ejecutivas.
-• Asegura una experiencia visual limpia, elegante y profesional.
-• Destaca métricas e insights críticos mediante principios de diseño visual avanzados.
+- La columna "Usuarios Certificados (Estructuras)" representa la cantidad efectivamente certificada respecto al objetivo definido en "Usuarios".
 
-Como Auditor de Diseño:
+FASE 2: Roles
+- Se ejecuta una vez completada la etapa de Estructuras.
+- Estado ROLES indica el avance de la segunda etapa.
+- Los estados pueden encontrarse como:
+  • NO INICIADO
+  • EN PROCESO
+  • COMPLETADO
 
-• Evalúa continuamente la calidad visual del dashboard.
-• Garantiza equilibrio entre información y simplicidad.
-• Evita contaminación visual.
-• Verifica que la información clave sea visible de inmediato.
-• Valida accesibilidad, legibilidad y consistencia.
-• Incluye recomendaciones de mejora si detectas oportunidades para fortalecer la comunicación ejecutiva.
+- La columna "Usuarios Asociados al Rol" representa la cantidad de usuarios que ya cuentan con la validación o asociación correspondiente dentro del proceso de roles.
 
-Libertad creativa:
+COMO DECODIFICADOR DE RESÚMENES
 
-Además de las instrucciones anteriores, cada rol podrá proponer ideas adicionales que mejoren la comprensión, el impacto visual y el valor ejecutivo de la imagen.
+• Identifica hallazgos relevantes.
+• Detecta niveles de avance y rezago.
+• Resume la situación general en mensajes ejecutivos.
+• Identifica áreas críticas.
+• Genera insights que permitan priorizar acciones.
+• Detecta entidades o categorías con mejor y peor desempeño.
+• Propón indicadores adicionales que aporten valor estratégico.
+• Construye una narrativa que permita entender rápidamente el estado del programa.
 
-Se permite incorporar:
+COMO ARQUITECTO DE MAQUETACIÓN
+
+• Diseña una experiencia visual orientada a comités ejecutivos.
+• Organiza la información siguiendo una lógica de recorrido natural.
+• Muestra claramente la relación entre las dos etapas del proceso.
+• Prioriza métricas de avance y cumplimiento.
+• Diseña visualizaciones que reflejen flujo, transición y progreso entre fases.
+• Puede incorporar embudos, roadmaps, indicadores de madurez, semáforos, scorecards o cualquier elemento que facilite la comprensión ejecutiva.
+• Tiene libertad para proponer visualizaciones innovadoras que generen mayor impacto.
+
+COMO CREADOR DE SISTEMAS TIPOGRÁFICOS
+
+• Define una jerarquía visual clara.
+• Prioriza KPIs de avance, cumplimiento y pendientes.
+• Utiliza títulos ejecutivos modernos.
+• Resalta hallazgos, riesgos y oportunidades.
+• Minimiza textos extensos.
+• Favorece una lectura rápida en menos de 30 segundos.
+
+COMO AUDITOR DE DISEÑO
+
+• Garantiza una experiencia visual limpia.
+• Evita sobrecarga de información.
+• Verifica consistencia visual.
+• Asegura que la información crítica sea visible inmediatamente.
+• Valida accesibilidad y legibilidad.
+• Incorpora recomendaciones visuales que incrementen el valor ejecutivo del dashboard.
+
+LIBERTAD CREATIVA
+
+No te limites a las métricas descritas.
+
+Puedes proponer e incorporar:
 
 • KPIs derivados.
-• Indicadores de riesgo.
-• Indicadores de exposición.
-• Indicadores de eficiencia.
-• Tendencias temporales.
-• Ranking de categorías.
-• Comparativas relevantes.
-• Hallazgos automáticos.
+• Indicadores de cumplimiento.
+• Indicadores de ejecución.
+• Indicadores de cobertura.
+• Tendencias.
+• Niveles de madurez.
+• Embudos de avance.
+• Ranking de áreas.
+• Ranking de empresas externas.
+• Distribución de estados.
 • Alertas visuales.
 • Semáforos ejecutivos.
-• Resúmenes de gestión.
 • Storytelling visual.
-• Infografías.
-• Recomendaciones estratégicas.
-• Cualquier visualización que ayude a comunicar mejor los resultados.
+• Insights automáticos.
+• Riesgos operativos.
+• Bloqueadores de avance.
+• Oportunidades de aceleración.
 
-Estilo visual esperado:
+ESTILO VISUAL
 
 • Dashboard ejecutivo premium.
-• Calidad de comité gerencial.
-• Inspirado en Power BI, Tableau y dashboards corporativos de clase mundial.
-• Minimalista y moderno.
-• Alto impacto visual.
-• Profesional y elegante.
-• Orientado a toma de decisiones.
-• Predominio de elementos visuales sobre texto.
-• Diseño tipo infografía ejecutiva.
-• Apariencia de Centro de Control de Gobierno de Identidades.
+• Nivel Comité Gerencial.
+• Inspirado en Power BI Executive Reports.
+• Minimalista.
+• Moderno.
+• Profesional.
+• Sofisticado.
+• Alta calidad.
+• Infográfico.
+• Visualmente impactante.
+• Orientado completamente a la toma de decisiones.
 
-La imagen final debe responder de forma inmediata:
+UTILIZA ICONOGRAFÍA RELACIONADA CON:
 
-• ¿Cuál fue el universo de usuarios analizado?
-• ¿Cuántos usuarios fueron depurados?
-• ¿Cuántos fueron habilitados?
-• ¿Cuántos fueron deshabilitados?
-• ¿Cuántos permanecen pendientes?
-• ¿Qué categorías presentan mayor avance?
-• ¿Qué categorías presentan mayor riesgo?
-• ¿Dónde deben enfocarse los esfuerzos de gestión?
-• ¿Cuáles son los principales hallazgos?
-• ¿Qué mensaje ejecutivo debería llevarse el gerente después de observar la imagen?
+• Usuarios externos.
+• Organización empresarial.
+• Estructuras organizacionales.
+• Gobierno de accesos.
+• Roles y perfiles.
+• Seguridad de la información.
+• Gestión de identidades.
+• Certificación de accesos.
+• Cumplimiento.
 
-No te limites a cumplir los requisitos indicados. Utiliza tu experiencia como equipo de expertos para proponer una presentación visual superior, incorporando las mejores prácticas de análisis, diseño ejecutivo, experiencia de usuario y comunicación estratégica.
+LA IMAGEN FINAL DEBE RESPONDER EN SEGUNDOS:
+
+• ¿Cuántos usuarios forman parte del objetivo total?
+• ¿Cuál es el porcentaje de avance de certificación de estructuras?
+• ¿Cuántos usuarios han sido certificados en la primera etapa?
+• ¿Cuántas estructuras están completadas, en progreso y no iniciadas?
+• ¿Qué avance tiene la certificación de roles?
+• ¿Cuántos usuarios ya tienen roles asociados?
+• ¿Dónde se concentran los mayores pendientes?
+• ¿Qué empresas externas presentan mayor avance?
+• ¿Qué empresas externas presentan mayor riesgo?
+• ¿Qué acciones debería priorizar la gerencia?
+• ¿Cuál es el estado general del programa de certificación de usuarios externos?
+
+No te limites a representar datos. Diseña una experiencia visual ejecutiva que explique la historia completa del proceso, resaltando avances, riesgos, bloqueos, cumplimiento y próximos pasos estratégicos.
