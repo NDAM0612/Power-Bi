@@ -1,0 +1,56 @@
+Estimados, buenas tardes; de acuerdo con la revisión efectuada, se identificaron diferencias entre la información registrada en la CMDB y el inventario de aplicaciones actualmente administradas por Gestión de Identidades:
+
+ 
+
+En la CMDB se proyecta un total de 331 aplicaciones; sin embargo, se verificó que, debido a un filtro configurado en el dashboard del ServiceNow por el tipo de aplicación, 35 aplicaciones están siendo excluidas por estar catalogadas como servicios externos; no obstante, el equipo de Gestión de Identidades también administra este tipo de aplicaciones, por lo que el total debería ser de 366 aplicaciones.
+Adicionalmente, se identificó que 16 aplicaciones no están siendo consideradas en la CMDB, pese a que actualmente se encuentran bajo gestión de Identidades y cuentan con procesos activos de administración de accesos.
+De estas, 23 aplicaciones no se encuentran detalladas en la CMDB debido a que forman parte de la infraestructura de Siglo XXI; pero mantenemos roles para la asignación de accesos a estas 23 aplicaciones; de no estar en la CMDB, no nos permite efectuar procesos de control de depuración de accesos.
+Asimismo, la CMDB registra 12 aplicaciones en estado decomisado; no obstante, desde Gestión de Identidades podemos confirmar que estas aplicaciones continúan operativas y con gestión activa de accesos.
+ 
+
+Considerando los puntos anteriores, al 11 de agosto la CMDB debería reflejar un total de 417 aplicaciones, considerando lo previamente indicado.
+
+ 
+
+
+
+CMDB
+
+Aplicaciones servicios externos (1)
+
+Aplicaciones sin registro en CMDB (2)
+
+Aplicaciones infraestructura Siglo XXI (3)
+
+Aplicaciones en estado decomisada pero activas (4)
+
+TOTAL
+
+331
+
+35
+
+16
+
+23
+
+12
+
+417
+
+ 
+
+Este tema ha sido revisado con @EXTERNO FALCON ROSARIO FREDDY VINICIO en base a la solicitud de @ALDAZ FLORES CATALINA ALEXANDRA quien se encuentra actualmente de vacaciones.
+
+ 
+
+Adicional, el incremento del alcance inicialmente considerado para la recepción de aplicaciones, que pasó de 232 a 395 aplicaciones, obedece también a una evolución en los criterios de incorporación definidos para Gestión de Identidades:
+
+La recepción de aplicaciones estaba restringida a aquellas que disponían de un módulo de seguridad propio (usuarios y roles).
+Actualmente, el alcance se ha ampliado para incluir aplicaciones estratégicas para el Negocio, aun cuando no dispongan de un módulo de seguridad propio, como es el caso de BPOne, Remesas, entre otras. Para estos casos se han implementado controles compensatorios de seguridad, entre los que destacan:
+Autenticación obligatoria mediante Microsoft Entra ID, integrado con el Gestor de Identidades.
+Control centralizado sobre la gestión de roles, impidiendo modificaciones directas por parte de los dueños aplicativos. Cualquier cambio de roles requiere un proceso formal de despliegue mediante Pipeline y la aprobación del equipo de Gestión de Identidades.
+Asimismo, se incorporaron dentro del alcance las aplicaciones de Ciberseguridad que no cuentan con un módulo de seguridad, las cuales no eran consideradas en el esquema inicial.
+ 
+
+Por lo expuesto, el incremento del universo de aplicaciones a administrar responde tanto a la regularización del inventario como a la ampliación del alcance operativo definido para Gestión de Identidades.
