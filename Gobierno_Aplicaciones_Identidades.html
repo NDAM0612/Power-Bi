@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Gobierno de Aplicaciones — Gestión de Identidades</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-900:#0d1f3d;
+    --navy-800:#132a52;
+    --navy-700:#1c3a68;
+    --navy-600:#294c82;
+    --gold:#F4B740;
+    --gold-deep:#D9971F;
+    --bg:#EDF0F6;
+    --card:#FFFFFF;
+    --border:#DFE3EE;
+    --text:#182238;
+    --text-soft:#5C6579;
+    --text-faint:#8991A3;
+    --green:#1F9E6D;
+    --green-bg:#E4F6EE;
+    --amber:#C9860A;
+    --amber-bg:#FCF1DA;
+    --red:#D14B34;
+    --red-bg:#FBE6E1;
+    --blue-bg:#E7EEFA;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{background:var(--bg); font-family:'IBM Plex Sans',sans-serif; color:var(--text);}
+  .num, .mono{font-family:'IBM Plex Mono',monospace;}
+
+  #scaleWrap{
+    width:1720px;
+    margin:0 auto;
+    transform-origin: top center;
+    padding: 22px 26px 26px;
+  }
+  .outerbg{ background:var(--bg); min-height:100vh; overflow-x:auto; }
+
+  /* ===== HEADER ===== */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    background:linear-gradient(100deg, var(--navy-900) 0%, var(--navy-700) 100%);
+    border-radius:16px; padding:20px 30px; color:#fff; margin-bottom:16px;
+    position:relative; overflow:hidden;
+  }
+  header::after{
+    content:""; position:absolute; right:-60px; top:-60px; width:260px; height:260px;
+    border-radius:50%; background:radial-gradient(circle, rgba(244,183,64,.20), transparent 70%);
+  }
+  header .htitle{ position:relative; z-index:1; }
+  header h1{ font-size:26px; font-weight:700; letter-spacing:.2px; }
+  header .subtitle{ font-size:13px; color:#C9D3E8; margin-top:4px; font-weight:400;}
+  header .subtitle b{color:#fff; font-weight:600;}
+  .badge-row{ display:flex; gap:10px; position:relative; z-index:1;}
+  .kpi-pill{
+    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18);
+    border-radius:12px; padding:9px 18px; text-align:center; min-width:118px;
+  }
+  .kpi-pill .v{ font-size:21px; font-weight:700; color:var(--gold); line-height:1;}
+  .kpi-pill .l{ font-size:9.5px; text-transform:uppercase; letter-spacing:.6px; color:#C9D3E8; margin-top:5px;}
+
+  /* ===== GRID ===== */
+  .grid3{ display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin-bottom:16px; }
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:14px;
+    padding:16px 18px 18px; box-shadow:0 1px 2px rgba(20,30,60,.04);
+    display:flex; flex-direction:column;
+  }
+  .card h2{
+    font-size:13px; font-weight:700; color:var(--navy-800); text-transform:uppercase; letter-spacing:.4px;
+    display:flex; align-items:center; gap:8px; margin-bottom:12px; border-bottom:2px solid var(--bg); padding-bottom:9px;
+  }
+  .card h2 .tag{
+    font-size:9px; font-weight:700; background:var(--gold); color:var(--navy-900); border-radius:5px;
+    padding:2px 6px; letter-spacing:.3px;
+  }
+  .card p.desc{ font-size:11.3px; color:var(--text-soft); line-height:1.5; margin-bottom:10px;}
+
+  /* ===== PANEL: reconciliacion ===== */
+  .recon-track{ background:var(--bg); border-radius:10px; padding:10px 12px; margin-bottom:10px; }
+  .recon-track:last-child{margin-bottom:0;}
+  .recon-track .rt-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;}
+  .recon-track .rt-label{ font-size:10.5px; font-weight:700; color:var(--navy-700); text-transform:uppercase; letter-spacing:.3px;}
+  .recon-track .rt-note{ font-size:9.5px; color:var(--text-faint); font-style:italic;}
+  .flow{ display:flex; align-items:center; gap:6px; }
+  .flow .fnum{
+    font-size:19px; font-weight:700; font-family:'IBM Plex Mono',monospace;
+  }
+  .flow .fnum.start{ color:var(--text-soft);}
+  .flow .fnum.end{ color:var(--navy-900); background:var(--gold); padding:2px 8px; border-radius:6px;}
+  .flow .arrow{ color:var(--text-faint); font-size:13px;}
+  .chips{ display:flex; flex-wrap:wrap; gap:5px; margin-top:7px; }
+  .chip{ font-size:9.6px; background:#fff; border:1px solid var(--border); border-radius:20px; padding:3px 9px; color:var(--text-soft); white-space:nowrap;}
+  .chip b{ color:var(--navy-800); font-family:'IBM Plex Mono',monospace;}
+
+  /* ===== PANEL: cobertura ===== */
+  .kpi-big{ display:flex; align-items:flex-end; gap:6px; margin-bottom:2px;}
+  .kpi-big .n1{ font-size:38px; font-weight:700; color:var(--navy-900); line-height:1;}
+  .kpi-big .n2{ font-size:17px; color:var(--text-faint); font-weight:500; margin-bottom:5px;}
+  .kpi-pct{ font-size:20px; font-weight:700; color:var(--gold-deep);}
+  .bar-outer{ background:var(--bg); border-radius:8px; height:11px; overflow:hidden; margin:7px 0 5px;}
+  .bar-inner{ height:100%; border-radius:8px; background:linear-gradient(90deg, var(--gold-deep), var(--gold)); }
+  .gap-line{ font-size:10px; color:var(--text-soft); display:flex; justify-content:space-between;}
+  .cov-block{ margin-bottom:14px; }
+  .cov-block:last-of-type{ margin-bottom:0;}
+  .cov-caption{ font-size:10.5px; font-weight:700; color:var(--navy-700); text-transform:uppercase; letter-spacing:.3px; margin-bottom:4px;}
+
+  /* ===== PANEL: priorizacion table ===== */
+  table.prio{ width:100%; border-collapse:collapse; font-size:11px; margin-bottom:12px;}
+  table.prio th{ background:var(--navy-800); color:#fff; text-align:left; padding:6px 8px; font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:.2px;}
+  table.prio th:last-child, table.prio td:last-child{ text-align:right; font-family:'IBM Plex Mono',monospace; font-weight:600;}
+  table.prio td{ padding:5.5px 8px; border-bottom:1px solid var(--bg); color:var(--text);}
+  table.prio tr.total td{ font-weight:700; border-top:2px solid var(--navy-800); border-bottom:none; background:var(--blue-bg);}
+  .dot{ display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px;}
+
+  .roadmap{ display:flex; align-items:flex-start; justify-content:space-between; position:relative; margin-top:4px; padding:0 4px;}
+  .roadmap::before{ content:""; position:absolute; top:8px; left:32px; right:32px; height:2px; background:var(--border);}
+  .rm-stop{ text-align:center; position:relative; z-index:1; flex:1;}
+  .rm-dot{ width:16px; height:16px; border-radius:50%; background:var(--gold); border:3px solid var(--navy-900); margin:0 auto 6px;}
+  .rm-stop.future .rm-dot{ background:#fff; border-color:var(--navy-600);}
+  .rm-q{ font-size:10.5px; font-weight:700; color:var(--navy-800); text-transform:uppercase;}
+  .rm-n{ font-size:17px; font-weight:700; color:var(--navy-900); margin-top:2px;}
+  .rm-l{ font-size:9px; color:var(--text-soft); max-width:90px; margin:1px auto 0; line-height:1.25;}
+
+  /* ===== PANEL: trend chart ===== */
+  .trend-wrap svg{ width:100%; height:auto; display:block; }
+  .legend-row{ display:flex; gap:14px; font-size:9.5px; color:var(--text-soft); margin-top:6px; flex-wrap:wrap;}
+  .legend-row span{ display:inline-flex; align-items:center; gap:4px;}
+  .legend-sw{ width:9px; height:9px; border-radius:2px; display:inline-block;}
+
+  /* ===== PANEL: brechas ===== */
+  .gap-card{ display:flex; gap:10px; align-items:flex-start; background:var(--bg); border-radius:10px; padding:10px 11px; margin-bottom:9px;}
+  .gap-card:last-child{margin-bottom:0;}
+  .gap-icon{ width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0;}
+  .gap-icon.amber{ background:var(--amber-bg); }
+  .gap-icon.red{ background:var(--red-bg);}
+  .gap-icon.blue{ background:var(--blue-bg);}
+  .gap-title{ font-size:11.5px; font-weight:700; color:var(--navy-800); }
+  .gap-title .n{ font-family:'IBM Plex Mono',monospace; color:var(--red); font-size:12.5px;}
+  .gap-desc{ font-size:10px; color:var(--text-soft); line-height:1.4; margin-top:2px;}
+
+  /* ===== PANEL: FAQ ===== */
+  .faq-item{ margin-bottom:9px; padding-bottom:9px; border-bottom:1px solid var(--bg);}
+  .faq-item:last-child{ border-bottom:none; margin-bottom:0; padding-bottom:0;}
+  .faq-q{ font-size:11.3px; font-weight:700; color:var(--navy-800); margin-bottom:2px; display:flex; gap:6px;}
+  .faq-q::before{ content:"P"; background:var(--gold); color:var(--navy-900); font-size:9px; font-weight:800; width:15px; height:15px; border-radius:4px; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px;}
+  .faq-a{ font-size:10.3px; color:var(--text-soft); line-height:1.45; padding-left:21px;}
+  .faq-a b{ color:var(--text);}
+
+  footer{
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--card); border:1px solid var(--border); border-radius:12px; padding:11px 20px;
+    font-size:10px; color:var(--text-faint);
+  }
+  footer b{ color:var(--navy-800);}
+</style>
+</head>
+<body>
+<div class="outerbg">
+<div id="scaleWrap">
+
+  <header>
+    <div class="htitle">
+      <h1>Gobierno de Aplicaciones — Gestión de Identidades</h1>
+      <div class="subtitle">Estado ejecutivo del programa · Corte al <b>11 de agosto 2026</b> · Fuente: inventario Identidades (30-jul-2026) + conciliación CMDB (11-ago-2026)</div>
+    </div>
+    <div class="badge-row">
+      <div class="kpi-pill"><div class="v">176</div><div class="l">Administradas hoy</div></div>
+      <div class="kpi-pill"><div class="v">44,6%</div><div class="l">Cobertura universo</div></div>
+      <div class="kpi-pill"><div class="v">417</div><div class="l">Inventario CMDB</div></div>
+    </div>
+  </header>
+
+  <!-- ROW 1 -->
+  <div class="grid3">
+
+    <!-- PANEL 1: Reconciliación -->
+    <div class="card">
+      <h2>¿Por qué cambió el número? <span class="tag">LEA ESTO PRIMERO</span></h2>
+      <p class="desc">Se movieron <b>dos cifras distintas, por dos razones distintas</b>. No es un solo cambio — son dos correcciones independientes que coincidieron en el tiempo.</p>
+
+      <div class="recon-track">
+        <div class="rt-head">
+          <div class="rt-label">① Alcance del mandato (a quién gobernamos)</div>
+          <div class="rt-note">Decisión de negocio</div>
+        </div>
+        <div class="flow">
+          <span class="fnum start">232</span><span class="arrow">→</span><span class="fnum end">395</span>
+        </div>
+        <div class="chips">
+          <span class="chip">Antes: solo apps con <b>módulo propio</b> de accesos</span>
+          <span class="chip">Ahora: + apps <b>estratégicas</b> sin módulo (BPOne, Remesas) con controles compensatorios</span>
+          <span class="chip">+ apps de <b>Ciberseguridad</b> antes fuera de alcance</span>
+        </div>
+      </div>
+
+      <div class="recon-track">
+        <div class="rt-head">
+          <div class="rt-label">② Inventario técnico CMDB (qué existe realmente)</div>
+          <div class="rt-note">Corrección de datos</div>
+        </div>
+        <div class="flow">
+          <span class="fnum start">331</span><span class="arrow">→</span><span class="fnum end">417</span>
+        </div>
+        <div class="chips">
+          <span class="chip">+<b>35</b> servicios externos excluidos por filtro erróneo de ServiceNow</span>
+          <span class="chip">+<b>16</b> apps gestionadas por Identidades sin registrar en CMDB</span>
+          <span class="chip">+<b>23</b> apps de infraestructura Siglo XXI no detalladas</span>
+          <span class="chip">+<b>12</b> "decomisadas" en CMDB pero operativas con accesos activos</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 2: Cobertura -->
+    <div class="card">
+      <h2>Cobertura del gobierno</h2>
+
+      <div class="cov-block">
+        <div class="cov-caption">Vs. meta original 2026</div>
+        <div class="kpi-big"><span class="n1">176</span><span class="n2">/ 232</span><span style="flex:1"></span><span class="kpi-pct">75,9%</span></div>
+        <div class="bar-outer"><div class="bar-inner" style="width:75.9%"></div></div>
+        <div class="gap-line"><span>Brecha: <b>56</b> apps</span><span>Meta cumplida en su definición original</span></div>
+      </div>
+
+      <div class="cov-block">
+        <div class="cov-caption">Vs. universo vigente (395)</div>
+        <div class="kpi-big"><span class="n1">176</span><span class="n2">/ 395</span><span style="flex:1"></span><span class="kpi-pct">44,6%</span></div>
+        <div class="bar-outer"><div class="bar-inner" style="width:44.6%"></div></div>
+        <div class="gap-line"><span>Brecha: <b>219</b> apps</span><span>Denominador correcto para 2026</span></div>
+      </div>
+
+      <div class="cov-block" style="margin-top:auto; padding-top:8px; border-top:1px dashed var(--border);">
+        <div class="cov-caption">Referencia — inventario técnico total (CMDB)</div>
+        <div class="kpi-big"><span class="n1" style="font-size:26px;">417</span><span class="n2" style="font-size:13px;">apps existentes en el Banco</span></div>
+        <div class="gap-line"><span>Incluye apps fuera de alcance de Identidades (sin módulo, sin criterio de recepción)</span></div>
+      </div>
+    </div>
+
+    <!-- PANEL 3: Priorizacion + roadmap -->
+    <div class="card">
+      <h2>Priorización y hoja de ruta</h2>
+      <table class="prio">
+        <tr><th>Estado</th><th>Apps</th></tr>
+        <tr><td><span class="dot" style="background:var(--green)"></span>Entregada</td><td>176</td></tr>
+        <tr><td><span class="dot" style="background:var(--amber)"></span>Pendiente revisión para planificar</td><td>91</td></tr>
+        <tr><td><span class="dot" style="background:#8991A3"></span>Planificada</td><td>51</td></tr>
+        <tr><td><span class="dot" style="background:var(--navy-600)"></span>Priorización criterio 1</td><td>27</td></tr>
+        <tr><td><span class="dot" style="background:var(--navy-600)"></span>Priorización criterio 2</td><td>33</td></tr>
+        <tr><td><span class="dot" style="background:var(--navy-600)"></span>Priorización criterio 3</td><td>17</td></tr>
+        <tr class="total"><td>Total universo vigente</td><td>395</td></tr>
+      </table>
+      <div class="roadmap">
+        <div class="rm-stop"><div class="rm-dot"></div><div class="rm-q">Hoy</div><div class="rm-n">176</div><div class="rm-l">Administradas</div></div>
+        <div class="rm-stop future"><div class="rm-dot"></div><div class="rm-q">Q3 2026</div><div class="rm-n">+27</div><div class="rm-l">Criterio 1 (mayor riesgo)</div></div>
+        <div class="rm-stop future"><div class="rm-dot"></div><div class="rm-q">Q4 2026</div><div class="rm-n">+33</div><div class="rm-l">Criterio 2</div></div>
+      </div>
+      <p class="desc" style="margin-top:8px; margin-bottom:0;">Los 17 de criterio 3 y las 91 pendientes de revisión definen el backlog 2027.</p>
+    </div>
+  </div>
+
+  <!-- ROW 2 -->
+  <div class="grid3">
+
+    <!-- PANEL 4: Trend -->
+    <div class="card">
+      <h2>Evolución de aplicaciones administradas</h2>
+      <p class="desc">Aplicaciones entregadas (accesos bajo control de Identidades), por año y detalle mensual 2026.</p>
+      <div class="trend-wrap">
+        <svg viewBox="0 0 580 210" xmlns="http://www.w3.org/2000/svg">
+          <!-- baseline -->
+          <line x1="30" y1="168" x2="565" y2="168" stroke="#DFE3EE" stroke-width="1.5"/>
+          <!-- yearly bars 2023-2025 -->
+          <!-- scale: max value 95 -> 130px height -->
+          <g font-family="IBM Plex Mono" font-size="10" fill="#5C6579">
+            <!-- 2023: 95 -->
+            <rect x="40" y="40" width="42" height="128" rx="4" fill="#C7D2E6"/>
+            <text x="61" y="34" text-anchor="middle" font-weight="700" fill="#294c82">95</text>
+            <text x="61" y="184" text-anchor="middle">2023</text>
+            <!-- 2024: 17 -->
+            <rect x="96" y="145" width="42" height="23" rx="4" fill="#C7D2E6"/>
+            <text x="117" y="139" text-anchor="middle" font-weight="700" fill="#294c82">17</text>
+            <text x="117" y="184" text-anchor="middle">2024</text>
+            <!-- 2025: 33 -->
+            <rect x="152" y="123" width="42" height="45" rx="4" fill="#C7D2E6"/>
+            <text x="173" y="117" text-anchor="middle" font-weight="700" fill="#294c82">33</text>
+            <text x="173" y="184" text-anchor="middle">2025</text>
+          </g>
+          <!-- divider -->
+          <line x1="216" y1="15" x2="216" y2="168" stroke="#DFE3EE" stroke-width="1" stroke-dasharray="3,3"/>
+          <text x="396" y="12" text-anchor="middle" font-family="IBM Plex Sans" font-size="9.5" fill="#8991A3" font-weight="600">DETALLE 2026 (ENE–JUN) · ACUMULADO YTD 31</text>
+
+          <!-- monthly 2026: Jan13 Feb5 Mar2 Apr1 May3 Jun7, max 13 -> 130px -->
+          <g font-family="IBM Plex Mono" font-size="10" fill="#0d1f3d">
+            <rect x="232" y="38" width="34" height="130" rx="4" fill="#F4B740"/>
+            <text x="249" y="32" text-anchor="middle" font-weight="700">13</text>
+            <text x="249" y="184" text-anchor="middle" font-family="IBM Plex Sans" fill="#5C6579" font-size="9.5">Ene</text>
+
+            <rect x="278" y="118" width="34" height="50" rx="4" fill="#F4B740"/>
+            <text x="295" y="112" text-anchor="middle" font-weight="700">5</text>
+            <text x="295" y="184" text-anchor="middle" font-family="IBM Plex Sans" fill="#5C6579" font-size="9.5">Feb</text>
+
+            <rect x="324" y="148" width="34" height="20" rx="4" fill="#F4B740"/>
+            <text x="341" y="142" text-anchor="middle" font-weight="700">2</text>
+            <text x="341" y="184" text-anchor="middle" font-family="IBM Plex Sans" fill="#5C6579" font-size="9.5">Mar</text>
+
+            <rect x="370" y="158" width="34" height="10" rx="4" fill="#F4B740"/>
+            <text x="387" y="152" text-anchor="middle" font-weight="700">1</text>
+            <text x="387" y="184" text-anchor="middle" font-family="IBM Plex Sans" fill="#5C6579" font-size="9.5">Abr</text>
+
+            <rect x="416" y="138" width="34" height="30" rx="4" fill="#F4B740"/>
+            <text x="433" y="132" text-anchor="middle" font-weight="700">3</text>
+            <text x="433" y="184" text-anchor="middle" font-family="IBM Plex Sans" fill="#5C6579" font-size="9.5">May</text>
+
+            <rect x="462" y="98" width="34" height="70" rx="4" fill="#F4B740"/>
+            <text x="479" y="92" text-anchor="middle" font-weight="700">7</text>
+            <text x="479" y="184" text-anchor="middle" font-family="IBM Plex Sans" fill="#5C6579" font-size="9.5">Jun</text>
+          </g>
+        </svg>
+      </div>
+      <div class="legend-row">
+        <span><i class="legend-sw" style="background:#C7D2E6"></i>Histórico anual (base pre-2026: 145 apps)</span>
+        <span><i class="legend-sw" style="background:#F4B740"></i>Mes 2026 (YTD: 31 apps)</span>
+        <span style="color:var(--text-faint)">Jul–ago 2026: en consolidación de datos</span>
+      </div>
+    </div>
+
+    <!-- PANEL 5: Brechas -->
+    <div class="card">
+      <h2>Brechas de control operativo</h2>
+      <div class="gap-card">
+        <div class="gap-icon amber">⚠️</div>
+        <div>
+          <div class="gap-title">Apps sin registrar en CMDB — <span class="n">16</span></div>
+          <div class="gap-desc">Identidades las administra y registra en GEMA, pero no existen en la CMDB. Sin registro, no hay activo formal ni trazabilidad de riesgo institucional.</div>
+        </div>
+      </div>
+      <div class="gap-card">
+        <div class="gap-icon red">🚫</div>
+        <div>
+          <div class="gap-title">Apps sin dueño (owner) — <span class="n">39</span></div>
+          <div class="gap-desc">De las 383 apps dentro de criterio, 39 no tienen Dueño de Aplicación registrado. Sin dueño, el proceso de recepción y certificación de accesos queda bloqueado.</div>
+        </div>
+      </div>
+      <div class="gap-card">
+        <div class="gap-icon blue">🔁</div>
+        <div>
+          <div class="gap-title">"Decomisadas" pero activas — <span class="n">12</span></div>
+          <div class="gap-desc">Figuran como retiradas en CMDB, pero mantienen gestión activa de accesos. Riesgo de auditoría: el registro oficial no refleja la realidad operativa.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 6: FAQ -->
+    <div class="card">
+      <h2>Preguntas frecuentes</h2>
+      <div class="faq-item">
+        <div class="faq-q">¿"Administrada" qué significa exactamente?</div>
+        <div class="faq-a">La aplicación completó su recepción formal: Identidades gestiona de forma centralizada el alta, baja y modificación de usuarios y perfiles, con reportería y controles auditables.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">¿232 o 395 — cuál es la meta correcta hoy?</div>
+        <div class="faq-a"><b>395</b>. 232 fue la meta bajo el criterio antiguo (solo apps con módulo propio). Al ampliar el alcance, el universo real a gobernar creció a 395 — no bajó el desempeño, subió el mandato.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">¿CMDB (417) y universo de Identidades (395) son lo mismo?</div>
+        <div class="faq-a">No. CMDB (417) es <b>todo</b> lo que existe en el Banco según ServiceNow. El universo de Identidades (395) es el <b>subconjunto</b> que cumple criterio de gobierno de accesos — algunas apps del CMDB nunca entrarán a este alcance (p. ej. sin usuarios internos).</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">¿Qué pasa con las 219 pendientes?</div>
+        <div class="faq-a">91 esperan revisión para planificar, 51 ya planificadas, y 77 en priorización (criterios 1–3). El roadmap ataca primero por nivel de riesgo (Q3–Q4 2026).</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div>Elaborado por <b>Gestión de Identidades</b> · Fuentes: <b>Aplicaciones – Identidades (30-jul-2026)</b> y correo de conciliación CMDB (11-ago-2026)</div>
+    <div>Próxima actualización: cierre Q3 2026</div>
+  </footer>
+
+</div>
+</div>
+
+<script>
+  function fitScale(){
+    var wrap = document.getElementById('scaleWrap');
+    var designWidth = 1720 + 52; // includes horizontal padding
+    var scale = Math.min(1, (window.innerWidth - 16) / designWidth);
+    wrap.style.transform = 'scale(' + scale + ')';
+    document.querySelector('.outerbg').style.height = (wrap.getBoundingClientRect().height) + 'px';
+  }
+  window.addEventListener('resize', fitScale);
+  window.addEventListener('load', fitScale);
+</script>
+</body>
+</html>
