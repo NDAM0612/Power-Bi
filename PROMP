@@ -1,0 +1,22 @@
+quiero que mantengas un esquema similar en estructura y colores del retrato para hacer una hoja de resumen en donde des a detallar que para próximos pasos se va hacer los siguientes spuntos:
+USUARIOS SIN MFA(iNFORMACION EN EL RETRATO)
+CUENTAS GENERICAS DE PROCESOS MANUALES(INFORMACION EN EL RETRATO)
+ADMINISTRADOR DE EQUIPO
+Este privilegio otorga control total sobre el equipo (gestión de configuraciones del sistema, instalación de software y ejecución de acciones criticas).
+Como resultado del análisis, se identificaron 224 cuentas con privilegios de administrador, distribuidas de la siguiente manera:
+29 cuentas de colaboradores internos.
+112 cuentas de colaboradores externos.
+83 cuentas genéricas
+ACCESO A PERIFÉRICOS EXTERNOS (SCANNER, DVD WRITER, USB, PDA)
+Este tipo de acceso permite a los usuarios conectar, transferir y gestionar información a través de dispositivos externos, como unidades USB, escáneres o dispositivos de almacenamiento, facilitando procesos operativos específicos (ej. intercambio de información con entidades externas). Debido a su naturaleza, requiere un control estricto para mitigar riesgos de fuga o exposición de información.
+ 
+Accesos permanentes:
+42 colaboradores cuentan con acceso permanente, distribuidos de la siguiente manera:
+22 con acceso a DVD Writer
+7 con acceso a scanner
+1 con acceso a cámara
+4 con acceso a PDA
+6 con acceso a USB, de los cuales:
+5 pertenecen al área de Gestión Tributaria, debido al envío recurrente de información al SRI.
+1 corresponde al Gerente Legal y Cumplimiento de DEUNA.
+2 corresponden a Alta Gerencia (Jaime Acosta E. y Antonio Acosta E.)
