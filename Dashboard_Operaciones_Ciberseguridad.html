@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estado de Operaciones de Ciberseguridad | CL · PL · ID</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --navy:#0B1F3A;
+    --navy2:#122A4D;
+    --navy3:#1B3A63;
+    --ice:#CADCFC;
+    --cyan:#17C3B2;
+    --cyan-dim:#0E8F84;
+    --amber:#F2A93B;
+    --red:#E4574C;
+    --green:#3FB68B;
+    --gray:#8CA0C0;
+    --bg:#F5F7FB;
+    --card:#FFFFFF;
+    --text:#1A2436;
+    --muted:#5B6B87;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family: Arial, Calibri, "Segoe UI", sans-serif;
+    background:var(--bg); color:var(--text);
+  }
+  header{
+    background:linear-gradient(135deg, var(--navy) 0%, var(--navy3) 100%);
+    color:#fff; padding:28px 36px 24px;
+  }
+  header .top{display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;}
+  header h1{margin:0; font-size:24px; font-weight:700; letter-spacing:.2px;}
+  header .sub{color:var(--ice); font-size:13px; margin-top:4px;}
+  header .meta{text-align:right; font-size:12px; color:var(--ice);}
+  header .meta strong{color:#fff; font-size:13px;}
+  .badge{
+    display:inline-block; background:rgba(23,195,178,.18); border:1px solid var(--cyan);
+    color:var(--cyan); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700;
+    letter-spacing:.4px; text-transform:uppercase; margin-top:8px;
+  }
+
+  .tabs{display:flex; gap:8px; margin-top:18px; flex-wrap:wrap;}
+  .tab{
+    padding:7px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;
+    background:rgba(255,255,255,.08); color:var(--ice); border:1px solid rgba(255,255,255,.15);
+    transition:.15s;
+  }
+  .tab:hover{background:rgba(255,255,255,.16);}
+  .tab.active{background:var(--cyan); color:var(--navy); border-color:var(--cyan);}
+
+  main{padding:24px 36px 60px; max-width:1440px; margin:0 auto;}
+
+  .section-title{
+    font-size:15px; font-weight:700; color:var(--navy); margin:36px 0 4px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .section-sub{font-size:12.5px; color:var(--muted); margin-bottom:14px; max-width:900px;}
+
+  .kpi-row{display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-top:-18px; position:relative; z-index:2;}
+  .kpi-card{
+    background:var(--card); border-radius:12px; padding:16px 18px; box-shadow:0 6px 18px rgba(11,31,58,.08);
+    border-top:3px solid var(--cyan);
+  }
+  .kpi-card.warn{border-top-color:var(--amber);}
+  .kpi-card.risk{border-top-color:var(--red);}
+  .kpi-label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; font-weight:700;}
+  .kpi-value{font-size:30px; font-weight:800; color:var(--navy); margin-top:4px; line-height:1;}
+  .kpi-value span{font-size:15px; font-weight:600; color:var(--muted);}
+  .kpi-foot{font-size:11.5px; color:var(--muted); margin-top:6px;}
+
+  .grid2{display:grid; grid-template-columns:1.3fr 1fr; gap:16px;}
+  .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+  .card{
+    background:var(--card); border-radius:12px; padding:18px 20px; box-shadow:0 4px 14px rgba(11,31,58,.06);
+  }
+  .card h3{margin:0 0 2px; font-size:14px; color:var(--navy);}
+  .card .desc{font-size:11.5px; color:var(--muted); margin-bottom:12px;}
+
+  .narrative{
+    background:#fff; border-left:4px solid var(--cyan); border-radius:8px; padding:16px 20px;
+    font-size:13.5px; line-height:1.55; color:var(--text); box-shadow:0 4px 14px rgba(11,31,58,.06);
+  }
+  .narrative b{color:var(--navy);}
+
+  .area-bar-row{display:flex; align-items:center; gap:12px; margin-bottom:16px;}
+  .area-bar-label{width:110px; font-size:12.5px; font-weight:700; color:var(--navy);}
+  .area-bar-track{flex:1; background:#EAEEF6; border-radius:6px; height:16px; position:relative; overflow:visible;}
+  .area-bar-fill{height:100%; border-radius:6px;}
+  .area-bar-target{position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--navy); opacity:.5;}
+  .area-bar-val{width:52px; text-align:right; font-size:13px; font-weight:800; color:var(--navy);}
+  .area-bar-n{width:80px; font-size:11px; color:var(--muted); text-align:right;}
+
+  table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  th{
+    text-align:left; padding:9px 10px; background:#F0F3F9; color:var(--navy);
+    font-size:11px; text-transform:uppercase; letter-spacing:.3px; font-weight:700;
+  }
+  td{padding:9px 10px; border-bottom:1px solid #EEF1F6; vertical-align:top;}
+  tr:hover td{background:#FAFBFD;}
+  .pill{display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:700;}
+  .pill.Finalizado{background:#E1F5EC; color:var(--green);}
+  .pill.Vencido{background:#FCE7E5; color:var(--red);}
+  .pill.EnRiesgo, .pill.Riesgo{background:#FDF0DA; color:#B67715;}
+  .pill.EnCurso{background:#E3ECFB; color:#2E5DA6;}
+  .pill.NoIniciado{background:#EEF0F4; color:var(--muted);}
+
+  .gantt-row{display:flex; align-items:center; margin-bottom:7px; font-size:11.5px;}
+  .gantt-label{width:190px; flex-shrink:0; color:var(--navy); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-right:8px;}
+  .gantt-track{flex:1; position:relative; height:20px; background:#F2F4F9; border-radius:4px;}
+  .gantt-fill{position:absolute; top:2px; bottom:2px; border-radius:4px; display:flex; align-items:center; overflow:hidden;}
+  .gantt-progress{position:absolute; top:0; bottom:0; left:0; background:rgba(255,255,255,.35); border-radius:4px 0 0 4px;}
+  .gantt-today{position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--red); z-index:5;}
+  .gantt-axis{display:flex; margin:6px 0 10px 198px; font-size:10px; color:var(--muted); position:relative; height:14px;}
+
+  .legend{display:flex; gap:16px; flex-wrap:wrap; margin-top:10px; font-size:11.5px; color:var(--muted);}
+  .legend span{display:inline-flex; align-items:center; gap:5px;}
+  .dot{width:9px; height:9px; border-radius:50%; display:inline-block;}
+
+  .formula-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:14px;}
+  .formula-card{background:#F8FAFD; border:1px solid #E4E9F2; border-radius:10px; padding:14px 16px;}
+  .formula-card h4{margin:0 0 6px; font-size:12.5px; color:var(--navy);}
+  .formula-card code{
+    display:block; background:var(--navy); color:var(--cyan); padding:8px 10px; border-radius:6px;
+    font-size:11.5px; margin:6px 0; font-family:"Courier New", monospace; overflow-x:auto;
+  }
+  .formula-card p{font-size:11.5px; color:var(--muted); margin:4px 0 0; line-height:1.5;}
+
+  .footnote{font-size:11px; color:var(--muted); margin-top:30px; border-top:1px solid #E4E9F2; padding-top:14px; line-height:1.6;}
+  .hidden{display:none !important;}
+  canvas{max-width:100%;}
+  @media (max-width:1100px){
+    .kpi-row{grid-template-columns:repeat(2,1fr);}
+    .grid2, .grid3{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top">
+    <div>
+      <h1>Estado de Operaciones de Ciberseguridad</h1>
+      <div class="sub">Cloud (CL) &middot; Plataformas (PL) &middot; Identidades (ID) — Reporte de avance del POA</div>
+      <div class="badge" id="healthBadge">Health Score 75 / 100 — Bueno, con puntos de atención</div>
+    </div>
+    <div class="meta">
+      <div><strong>Fecha de corte:</strong> 02-sep-2026</div>
+      <div>18 iniciativas &middot; 61 hitos registrados</div>
+      <div>Fuente: POA Operaciones Ciberseguridad</div>
+    </div>
+  </div>
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-area="Todos">Todas las áreas</div>
+    <div class="tab" data-area="Cloud">Cloud</div>
+    <div class="tab" data-area="Plataformas">Plataformas</div>
+    <div class="tab" data-area="Identidades">Identidades</div>
+  </div>
+</header>
+
+<main>
+
+  <div class="kpi-row" id="kpiRow"></div>
+
+  <div class="section-title">¿Cómo leer este reporte?</div>
+  <div class="narrative" id="narrative"></div>
+
+  <div class="section-title">Avance vs. meta por área</div>
+  <div class="section-sub">Barra = avance promedio ponderado de los hitos de cada área. Línea vertical = meta 100%. El tamaño de cada área en el portafolio es muy distinto: Plataformas concentra el 61% de los hitos, Identidades el 34% y Cloud el 5% — léase esta última con cautela por su bajo volumen de datos.</div>
+  <div class="card" id="areaBarsCard"></div>
+
+  <div class="grid2" style="margin-top:16px;">
+    <div class="card">
+      <h3>Distribución de estado por área</h3>
+      <div class="desc">Composición de los hitos según su estado declarado. Permite ver dónde se concentra el trabajo "en ejecución" vs. lo ya cerrado.</div>
+      <canvas id="stackedStatus" height="230"></canvas>
+    </div>
+    <div class="card">
+      <h3>Comparativo multidimensional entre áreas</h3>
+      <div class="desc">Cada eje normalizado 0–100. Cuanto más grande el polígono, mejor el desempeño relativo del área.</div>
+      <canvas id="radarChart" height="230"></canvas>
+    </div>
+  </div>
+
+  <div class="section-title">Cronograma de iniciativas (vista Gantt)</div>
+  <div class="section-sub">Cada barra representa una iniciativa del POA, desde su fecha de inicio hasta el hito con fecha más lejana. El relleno claro interior indica el % de avance real. La línea roja marca la fecha de hoy. Color = estado de riesgo.</div>
+  <div class="card" id="ganttCard"></div>
+
+  <div class="section-title">Brecha vs. plan y concentración de cierres en Q4</div>
+  <div class="section-sub">Eje X: % de hitos pendientes de una iniciativa cuyo cierre cae en Q4 (oct-dic 2026). Eje Y: diferencia entre el avance esperado por cronograma y el avance real, en puntos porcentuales (positivo = atrasado, negativo = adelantado). Tamaño = cantidad de hitos. Sólo iniciativas activas (excluye las ya finalizadas al 100%).</div>
+  <div class="card">
+    <div id="quadrantChart"></div>
+  </div>
+
+  <div class="section-title">Mapa de riesgo del portafolio</div>
+  <div class="section-sub">Eje X: % de avance. Eje Y: días para el vencimiento del hito más lejano (negativo = ya vencido). Tamaño de la burbuja = cantidad de hitos de la iniciativa. La esquina inferior izquierda es la de mayor atención: poco avance y poco tiempo.</div>
+  <div class="card">
+    <canvas id="riskScatter" height="260"></canvas>
+  </div>
+
+  <div class="section-title">Alertas críticas — requieren decisión o seguimiento</div>
+  <div class="section-sub">Hitos vencidos (fecha fin pasada sin cerrar) o próximos a vencer en los próximos 45 días con avance incompleto.</div>
+  <div class="card">
+    <table id="alertsTable">
+      <thead>
+        <tr><th>Iniciativa</th><th>Área</th><th>Hito</th><th>Fecha fin</th><th>Avance</th><th>Estado</th><th>Situación</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="section-title">Detalle de iniciativas</div>
+  <div class="card">
+    <table id="initTable">
+      <thead>
+        <tr><th>Código</th><th>Iniciativa</th><th>Área</th><th># Hitos</th><th>Avance</th><th>Fin planificado</th><th>Estado</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="section-title">Metodología: fórmulas de los KPI</div>
+  <div class="section-sub">Definiciones utilizadas para calcular cada indicador de este reporte, para trazabilidad y auditoría.</div>
+  <div class="formula-grid">
+    <div class="formula-card">
+      <h4>% Avance del portafolio</h4>
+      <code>Avance = Σ(avance % de cada hito) / N° de hitos</code>
+      <p>Promedio simple del avance declarado en cada actividad/hito del POA. Se calcula igual a nivel global, por área y por iniciativa.</p>
+    </div>
+    <div class="formula-card">
+      <h4>Índice de Cumplimiento de Plazos (ICP)</h4>
+      <code>ICP = (Hitos finalizados a tiempo / Hitos cuya fecha fin ya venció) × 100</code>
+      <p>De todos los hitos cuya fecha de fin ya pasó, qué porcentaje efectivamente se cerró como "Finalizado". Cuando un área no tiene hitos aún vencidos, se asume ICP = 100 (sin evidencia de incumplimiento).</p>
+    </div>
+    <div class="formula-card">
+      <h4>% de hitos en riesgo</h4>
+      <code>% Riesgo = (Vencidos + Próx. a vencer ≤45d sin cerrar) / Total hitos</code>
+      <p>Un hito "vencido" ya pasó su fecha fin sin marcarse Finalizado. Un hito "próximo a vencer" vence en 45 días o menos y sigue sin cerrarse.</p>
+    </div>
+    <div class="formula-card">
+      <h4>Health Score (índice compuesto)</h4>
+      <code>Health = 0.5×Avance + 0.3×ICP + 0.2×(100 − %Riesgo)</code>
+      <p>Ponderación: 50% cuánto se ha avanzado, 30% qué tan puntual se ha sido, 20% cuánta exposición a riesgo existe hoy. Escala 0–100. &gt;80 sólido, 65–80 aceptable con seguimiento, &lt;65 requiere intervención.</p>
+    </div>
+  </div>
+
+  <div class="footnote">
+    <strong>Notas y supuestos:</strong>
+    Este reporte procesa el archivo POA vigente a la fecha de corte (61 hitos, 18 iniciativas). Los códigos <strong>OP-PL-xx</strong>, <strong>OP-ID-xx</strong> y <strong>OP-CL-xx</strong> se agruparon directamente por su sigla de área; las iniciativas <strong>OP-07</strong> (Gobierno XSOAR) y <strong>OP-11</strong> (Gestor de identidades interno) no traen sigla de área en su código y se clasificaron por el contenido de su nombre en Plataformas e Identidades respectivamente — se recomienda confirmar esta clasificación con el equipo de POA.
+    Se detectaron 2 hitos marcados con 100% de avance pero sin estado "Finalizado" (ej. OP-07, OP-ID-03): son candidatos a cierre formal en el sistema, no necesariamente atrasos reales.
+    El área Cloud aporta sólo 3 de los 61 hitos totales (1 iniciativa); sus indicadores deben interpretarse con cautela por el bajo volumen de datos y no como representativos de la madurez real de todo el dominio Cloud.
+    Este es un corte único (snapshot). Para medir tendencia y velocidad de ejecución mes a mes se requiere repetir esta extracción periódicamente y conservar el histórico.
+  </div>
+
+</main>
+
+<script>
+const DATA = {
+  global: {"n_act": 61, "n_init": 18, "avance": 67.9, "icp": 78.6, "vencidos": 6, "en_riesgo": 2, "pct_riesgo": 13.1, "health": 74.9,
+            "estado": {"Finalizado": 28, "En ejecución": 21, "No iniciado": 9, "Iniciado": 3}},
+  areas: {
+    "Identidades": {"n_act": 21, "n_init": 5, "avance": 64.8, "icp": 71.4, "vencidos": 2, "en_riesgo": 0, "pct_riesgo": 9.5, "health": 71.9,
+                     "estado": {"En ejecución": 11, "Finalizado": 7, "No iniciado": 2, "Iniciado": 1}},
+    "Plataformas": {"n_act": 37, "n_init": 12, "avance": 69.6, "icp": 81.0, "vencidos": 4, "en_riesgo": 2, "pct_riesgo": 16.2, "health": 75.8,
+                     "estado": {"Finalizado": 19, "En ejecución": 9, "No iniciado": 7, "Iniciado": 2}},
+    "Cloud": {"n_act": 3, "n_init": 1, "avance": 68.3, "icp": 100.0, "vencidos": 0, "en_riesgo": 0, "pct_riesgo": 0.0, "health": 84.2,
+               "estado": {"Finalizado": 2, "En ejecución": 1}}
+  }
+};
+
+const INITIATIVES = [
+{"area": "Cloud", "title": "OP-CL-01", "nombre": "Cumplimiento de Seguridad Cloud en Journey to Cloud", "avance": 68.3, "n_act": 3, "inicio": "2026-07-12", "fin": "2026-12-31", "vencidos": 0, "en_riesgo": 0, "status": "En curso", "dias_para_fin": 120},
+{"area": "Identidades", "title": "OP-11", "nombre": "IAM - Gestor de identidades interno (Fase 1)", "avance": 100.0, "n_act": 1, "inicio": "2024-10-31", "fin": "2026-03-31", "vencidos": 0, "en_riesgo": 0, "status": "Finalizado", "dias_para_fin": -155},
+{"area": "Identidades", "title": "OP-ID-03", "nombre": "Casos de Uso como mejora para el control de usuarios privilegiados en sistemas operativos", "avance": 38.0, "n_act": 5, "inicio": "2026-01-01", "fin": "2026-12-31", "vencidos": 0, "en_riesgo": 0, "status": "En curso", "dias_para_fin": 120},
+{"area": "Identidades", "title": "OP-ID-06", "nombre": "Control de accesos en procesos de transferencia de archivos.", "avance": 70.0, "n_act": 4, "inicio": "2026-01-01", "fin": "2026-12-31", "vencidos": 0, "en_riesgo": 0, "status": "En curso", "dias_para_fin": 120},
+{"area": "Identidades", "title": "OP-ID-10", "nombre": "Proyecto PAM - Just in Time", "avance": 54.0, "n_act": 5, "inicio": "2026-01-01", "fin": "2026-12-31", "vencidos": 0, "en_riesgo": 0, "status": "En curso", "dias_para_fin": 120},
+{"area": "Identidades", "title": "OP-ID-15", "nombre": "Mejora y automatización del Gobierno de Accesos Cloud", "avance": 86.7, "n_act": 6, "inicio": "2026-01-02", "fin": "2026-12-30", "vencidos": 2, "en_riesgo": 0, "status": "Vencido", "dias_para_fin": 119},
+{"area": "Plataformas", "title": "OP-07", "nombre": "Gobierno XSOAR para automatizaciones (Fase 1)", "avance": 100.0, "n_act": 4, "inicio": "2025-06-01", "fin": "2026-04-30", "vencidos": 1, "en_riesgo": 0, "status": "Finalizado", "dias_para_fin": -125},
+{"area": "Plataformas", "title": "OP-PL-04", "nombre": "Migración de Detect ID a nueva infraestructura y versión de la plataforma", "avance": 58.3, "n_act": 3, "inicio": "2026-01-25", "fin": "2026-12-31", "vencidos": 0, "en_riesgo": 1, "status": "En riesgo", "dias_para_fin": 120},
+{"area": "Plataformas", "title": "OP-PL-01", "nombre": "Actualización BDD Forcepoint de SQL 2017 a SQL 2022", "avance": 100.0, "n_act": 3, "inicio": "2026-02-01", "fin": "2026-07-01", "vencidos": 0, "en_riesgo": 0, "status": "Finalizado", "dias_para_fin": -63},
+{"area": "Plataformas", "title": "OP-PL-14", "nombre": "Implementación de 3 nuevas cajas Darktrace en DCP", "avance": 66.7, "n_act": 3, "inicio": "2026-03-01", "fin": "2026-12-31", "vencidos": 0, "en_riesgo": 0, "status": "En curso", "dias_para_fin": 120},
+{"area": "Plataformas", "title": "OP-PL-17", "nombre": "Elaboración de Dashboard gerencial de contratos y presupuesto de plataformas", "avance": 70.0, "n_act": 3, "inicio": "2026-03-31", "fin": "2026-10-30", "vencidos": 0, "en_riesgo": 0, "status": "En curso", "dias_para_fin": 58},
+{"area": "Plataformas", "title": "OP-PL-12", "nombre": "Integración de 5 nuevas fuentes al SIEM Splunk de Banco Pichincha", "avance": 66.7, "n_act": 3, "inicio": "2026-04-01", "fin": "2026-12-31", "vencidos": 0, "en_riesgo": 0, "status": "En curso", "dias_para_fin": 120},
+{"area": "Plataformas", "title": "OP-PL-13", "nombre": "Control de acceso a la red para MacBook mediante JAMF (Compliance) + ISE", "avance": 100.0, "n_act": 3, "inicio": "2026-04-01", "fin": "2026-07-31", "vencidos": 0, "en_riesgo": 0, "status": "Finalizado", "dias_para_fin": -33},
+{"area": "Plataformas", "title": "OP-PL-18", "nombre": "Adopción de plataformas de seguridad física al modelo operativo de Plataformas", "avance": 70.0, "n_act": 1, "inicio": "2026-04-01", "fin": "2026-12-31", "vencidos": 0, "en_riesgo": 0, "status": "En curso", "dias_para_fin": 120},
+{"area": "Plataformas", "title": "OP-PL-19", "nombre": "Esquema de contingencia operativa para el personal de Ciberseguridad", "avance": 66.2, "n_act": 4, "inicio": "2026-04-01", "fin": "2026-12-31", "vencidos": 1, "en_riesgo": 0, "status": "Vencido", "dias_para_fin": 120},
+{"area": "Plataformas", "title": "OP-PL-20", "nombre": "Incremento de Adherencia al Modelo Operativo de Plataformas de Ciberseguridad", "avance": 66.7, "n_act": 3, "inicio": "2026-05-01", "fin": "2026-12-30", "vencidos": 1, "en_riesgo": 0, "status": "Vencido", "dias_para_fin": 119},
+{"area": "Plataformas", "title": "OP-PL-02", "nombre": "Automatización remediación de agentes y actualización de políticas.", "avance": 33.3, "n_act": 3, "inicio": "2026-06-15", "fin": "2026-12-31", "vencidos": 0, "en_riesgo": 0, "status": "En curso", "dias_para_fin": 120},
+{"area": "Plataformas", "title": "OP-PL-06", "nombre": "Automatización del proceso de cobertura de agentes en equipos de usuario final", "avance": 38.8, "n_act": 4, "inicio": "2026-06-15", "fin": "2026-12-31", "vencidos": 1, "en_riesgo": 1, "status": "Vencido", "dias_para_fin": 120}
+];
+
+const ALERTS = [
+{"Title":"OP-07","Nombre":"Gobierno XSOAR para automatizaciones (Fase 1)","Area":"Plataformas","Hito":"Capacitación","FechaFin":"2026-04-30","Avance":100.0,"Estado":"En ejecución","motivo":"Cierre pendiente (100% avance, no marcado Finalizado)"},
+{"Title":"OP-ID-15","Nombre":"Mejora y automatización del Gobierno de Accesos Cloud","Area":"Identidades","Hito":"Control usuarios genéricos","FechaFin":"2026-08-30","Avance":90.0,"Estado":"En ejecución","motivo":"Vencido"},
+{"Title":"OP-ID-15","Nombre":"Mejora y automatización del Gobierno de Accesos Cloud","Area":"Identidades","Hito":"Reportes y alertas de desviaciones en roles Cloud","FechaFin":"2026-08-30","Avance":85.0,"Estado":"En ejecución","motivo":"Vencido"},
+{"Title":"OP-PL-06","Nombre":"Automatización de cobertura de agentes","Area":"Plataformas","Hito":"HITO 1: Ingesta y validación de fuentes","FechaFin":"2026-08-31","Avance":85.0,"Estado":"En ejecución","motivo":"Vencido"},
+{"Title":"OP-PL-19","Nombre":"Esquema de contingencia operativa","Area":"Plataformas","Hito":"Informe ejecutivo de pruebas de contingencia","FechaFin":"2026-08-31","Avance":85.0,"Estado":"En ejecución","motivo":"Vencido"},
+{"Title":"OP-PL-20","Nombre":"Adherencia al Modelo Operativo de Plataformas","Area":"Plataformas","Hito":"Hito 2: Modelo medido y ajustado","FechaFin":"2026-08-31","Avance":70.0,"Estado":"En ejecución","motivo":"Vencido"},
+{"Title":"OP-PL-04","Nombre":"Migración de Detect ID","Area":"Plataformas","Hito":"Migración de Detect ID en ambiente de Test","FechaFin":"2026-09-30","Avance":65.0,"Estado":"En ejecución","motivo":"Próximo a vencer (28 días)"},
+{"Title":"OP-PL-06","Nombre":"Automatización de cobertura de agentes","Area":"Plataformas","Hito":"Cálculo automático de cobertura","FechaFin":"2026-09-30","Avance":70.0,"Estado":"En ejecución","motivo":"Próximo a vencer (28 días)"}
+];
+
+// Brecha vs. Plan (p.p.) y % de hitos pendientes con cierre en Q4 (oct-dic 2026). Sólo iniciativas activas.
+// dx = posición horizontal ajustada SOLO para legibilidad visual cuando varias iniciativas comparten el mismo % (valor real en pctq4).
+const QUADRANT_DATA = [
+  { title: "OP-ID-15", area: "Identidades", brecha: 7.9, pctq4: 33.3, dx: 33.3, n: 6 },
+  { title: "OP-PL-04", area: "Plataformas", brecha: 2.5, pctq4: 0.0, dx: 2, n: 3 },
+  { title: "OP-PL-14", area: "Plataformas", brecha: 7.0, pctq4: 0.0, dx: 9, n: 3 },
+  { title: "OP-CL-01", area: "Cloud", brecha: -38.1, pctq4: 100.0, dx: 100, n: 3 },
+  { title: "OP-ID-06", area: "Identidades", brecha: -3.0, pctq4: 100.0, dx: 100, n: 4 },
+  { title: "OP-PL-02", area: "Plataformas", brecha: -7.2, pctq4: 100.0, dx: 91, n: 3 },
+  { title: "OP-PL-12", area: "Plataformas", brecha: -10.3, pctq4: 100.0, dx: 82, n: 3 },
+  { title: "OP-PL-18", area: "Plataformas", brecha: -13.8, pctq4: 100.0, dx: 73, n: 1 },
+  { title: "OP-ID-03", area: "Identidades", brecha: 29.0, pctq4: 100.0, dx: 100, n: 5 },
+  { title: "OP-ID-10", area: "Identidades", brecha: 19.6, pctq4: 100.0, dx: 89, n: 5 },
+  { title: "OP-PL-06", area: "Plataformas", brecha: 4.7, pctq4: 50.0, dx: 44, n: 4 },
+  { title: "OP-PL-17", area: "Plataformas", brecha: 8.0, pctq4: 100.0, dx: 100, n: 3 },
+  { title: "OP-PL-19", area: "Plataformas", brecha: 8.2, pctq4: 66.7, dx: 66.7, n: 4 },
+  { title: "OP-PL-20", area: "Plataformas", brecha: 11.5, pctq4: 50.0, dx: 56, n: 3 }
+];
+
+const COLORS = {
+  Cloud: '#17C3B2', Plataformas: '#2E5DA6', Identidades: '#F2A93B',
+  Finalizado: '#3FB68B', Vencido: '#E4574C', 'En riesgo': '#F2A93B', 'En curso': '#2E5DA6', 'No iniciado': '#8CA0C0'
+};
+
+let currentArea = 'Todos';
+let charts = {};
+
+function fmtPct(v){ return v.toFixed(1).replace('.0','') + '%'; }
+
+function healthLabel(h){
+  if(h>=80) return 'Sólido';
+  if(h>=65) return 'Bueno, con puntos de atención';
+  return 'Requiere intervención';
+}
+
+function renderKPIs(){
+  const g = currentArea==='Todos' ? DATA.global : DATA.areas[currentArea];
+  const row = document.getElementById('kpiRow');
+  row.innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-label">Health Score</div>
+      <div class="kpi-value">${g.health.toFixed(0)}<span>/100</span></div>
+      <div class="kpi-foot">${healthLabel(g.health)}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Avance del portafolio</div>
+      <div class="kpi-value">${fmtPct(g.avance)}</div>
+      <div class="kpi-foot">${g.n_init} iniciativas &middot; ${g.n_act} hitos</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Cumplimiento de plazos (ICP)</div>
+      <div class="kpi-value">${fmtPct(g.icp)}</div>
+      <div class="kpi-foot">De los hitos ya vencidos, % cerrado a tiempo</div>
+    </div>
+    <div class="kpi-card ${g.vencidos>0 ? 'risk':''}">
+      <div class="kpi-label">Hitos vencidos</div>
+      <div class="kpi-value">${g.vencidos}</div>
+      <div class="kpi-foot">Fecha fin superada sin cierre</div>
+    </div>
+    <div class="kpi-card ${g.en_riesgo>0 ? 'warn':''}">
+      <div class="kpi-label">Próximos a vencer (≤45d)</div>
+      <div class="kpi-value">${g.en_riesgo}</div>
+      <div class="kpi-foot">${fmtPct(g.pct_riesgo)} del total en zona de riesgo</div>
+    </div>
+  `;
+  document.getElementById('healthBadge').textContent = `Health Score ${g.health.toFixed(0)} / 100 — ${healthLabel(g.health)}`;
+}
+
+function renderNarrative(){
+  const el = document.getElementById('narrative');
+  if(currentArea==='Todos'){
+    el.innerHTML = `El portafolio de <b>Operaciones de Ciberseguridad</b> muestra un avance global de <b>${fmtPct(DATA.global.avance)}</b>
+    sobre 61 hitos y 18 iniciativas activas, con un <b>Health Score de ${DATA.global.health.toFixed(0)}/100</b> (bueno, con puntos de atención).
+    <b>Plataformas</b> concentra el mayor volumen de trabajo (37 hitos, 61% del total) y también la mayor exposición a riesgo (${fmtPct(DATA.areas.Plataformas.pct_riesgo)} de sus hitos vencidos o próximos a vencer).
+    <b>Identidades</b> avanza de forma más pareja pero con el ICP más bajo (${fmtPct(DATA.areas.Identidades.icp)}), señal de que cuando algo se atrasa en esta área tiende a no recuperarse a tiempo.
+    <b>Cloud</b> muestra el mejor Health Score (${DATA.areas.Cloud.health.toFixed(0)}), aunque con una sola iniciativa activa, por lo que aún no es una muestra representativa del dominio.
+    Hay <b>6 hitos vencidos y 2 próximos a vencer</b> que requieren decisión o reasignación de prioridad esta semana.`;
+  } else {
+    const a = DATA.areas[currentArea];
+    el.innerHTML = `<b>${currentArea}</b> registra un avance de <b>${fmtPct(a.avance)}</b> sobre ${a.n_act} hitos en ${a.n_init} iniciativas,
+    con un Health Score de <b>${a.health.toFixed(0)}/100</b> (${healthLabel(a.health)}).
+    El cumplimiento de plazos (ICP) es de <b>${fmtPct(a.icp)}</b> y actualmente hay <b>${a.vencidos} hito(s) vencido(s)</b> y <b>${a.en_riesgo}</b> próximos a vencer,
+    equivalentes al <b>${fmtPct(a.pct_riesgo)}</b> de la carga de esta área.`;
+  }
+}
+
+function renderAreaBars(){
+  const areas = currentArea==='Todos' ? ['Plataformas','Identidades','Cloud'] : [currentArea];
+  let html = '';
+  areas.forEach(a=>{
+    const d = DATA.areas[a];
+    html += `
+      <div class="area-bar-row">
+        <div class="area-bar-label">${a}</div>
+        <div class="area-bar-track">
+          <div class="area-bar-fill" style="width:${d.avance}%; background:${COLORS[a]};"></div>
+          <div class="area-bar-target" style="left:100%;"></div>
+        </div>
+        <div class="area-bar-val">${fmtPct(d.avance)}</div>
+        <div class="area-bar-n">${d.n_init} iniciativas</div>
+      </div>`;
+  });
+  document.getElementById('areaBarsCard').innerHTML = html;
+}
+
+function renderStackedStatus(){
+  const ctx = document.getElementById('stackedStatus');
+  const areas = ['Plataformas','Identidades','Cloud'].filter(a=>currentArea==='Todos'||a===currentArea);
+  const estados = ['Finalizado','En ejecución','Iniciado','No iniciado'];
+  const estadoColors = {'Finalizado':'#3FB68B','En ejecución':'#2E5DA6','Iniciado':'#F2A93B','No iniciado':'#C7CEDC'};
+  const datasets = estados.map(e=>({
+    label: e,
+    data: areas.map(a=> (DATA.areas[a].estado[e]||0) ),
+    backgroundColor: estadoColors[e],
+    borderRadius: 4,
+  }));
+  if(charts.stacked) charts.stacked.destroy();
+  charts.stacked = new Chart(ctx, {
+    type:'bar',
+    data:{ labels: areas, datasets },
+    options:{
+      responsive:true,
+      plugins:{ legend:{ position:'bottom', labels:{boxWidth:10, font:{size:11}} } },
+      scales:{ x:{ stacked:true, grid:{display:false} }, y:{ stacked:true, ticks:{stepSize:5}, grid:{color:'#EEF1F6'} } }
+    }
+  });
+}
+
+function normalize(val, min, max){ return Math.max(0, Math.min(100, ((val-min)/(max-min))*100)); }
+
+function renderRadar(){
+  const ctx = document.getElementById('radarChart');
+  const areas = ['Plataformas','Identidades','Cloud'];
+  const maxAct = Math.max(...areas.map(a=>DATA.areas[a].n_act));
+  const datasets = areas.filter(a=>currentArea==='Todos'||a===currentArea).map(a=>{
+    const d = DATA.areas[a];
+    return {
+      label:a,
+      data:[ d.avance, d.icp, 100-d.pct_riesgo, (d.n_act/maxAct)*100 ],
+      borderColor: COLORS[a], backgroundColor: COLORS[a]+'33', pointBackgroundColor: COLORS[a], borderWidth:2
+    };
+  });
+  if(charts.radar) charts.radar.destroy();
+  charts.radar = new Chart(ctx, {
+    type:'radar',
+    data:{ labels:['Avance','Cumplimiento plazos','Bajo riesgo','Volumen de carga'], datasets },
+    options:{
+      responsive:true,
+      plugins:{ legend:{ position:'bottom', labels:{boxWidth:10, font:{size:11}} } },
+      scales:{ r:{ min:0, max:100, ticks:{stepSize:25, backdropColor:'transparent', font:{size:9}}, grid:{color:'#E4E9F2'}, pointLabels:{font:{size:11}} } }
+    }
+  });
+}
+
+function dateToDay(d, base){ return Math.round((new Date(d) - base)/86400000); }
+
+function renderGantt(){
+  const filtered = INITIATIVES.filter(i=>currentArea==='Todos'||i.area===currentArea);
+  const allDates = filtered.flatMap(i=>[new Date(i.inicio), new Date(i.fin)]);
+  const minD = new Date(Math.min(...allDates));
+  const maxD = new Date(Math.max(...allDates));
+  const today = new Date('2026-09-02');
+  const totalDays = dateToDay(maxD, minD) || 1;
+  const todayPct = (dateToDay(today, minD)/totalDays)*100;
+
+  let html = '';
+  filtered.forEach(i=>{
+    const startPct = (dateToDay(i.inicio, minD)/totalDays)*100;
+    const endPct = (dateToDay(i.fin, minD)/totalDays)*100;
+    const widthPct = endPct-startPct;
+    const color = COLORS[i.status] || '#8CA0C0';
+    html += `
+      <div class="gantt-row">
+        <div class="gantt-label" title="${i.nombre}">${i.title} · ${i.nombre.slice(0,26)}${i.nombre.length>26?'…':''}</div>
+        <div class="gantt-track">
+          <div class="gantt-fill" style="left:${startPct}%; width:${Math.max(widthPct,1.2)}%; background:${color};">
+            <div class="gantt-progress" style="width:${i.avance}%;"></div>
+          </div>
+          ${todayPct>=0&&todayPct<=100 ? `<div class="gantt-today" style="left:${todayPct}%;"></div>` : ''}
+        </div>
+      </div>`;
+  });
+  document.getElementById('ganttCard').innerHTML = html + `
+    <div class="legend">
+      <span><span class="dot" style="background:${COLORS['Finalizado']}"></span>Finalizado</span>
+      <span><span class="dot" style="background:${COLORS['En curso']}"></span>En curso</span>
+      <span><span class="dot" style="background:${COLORS['En riesgo']}"></span>En riesgo</span>
+      <span><span class="dot" style="background:${COLORS['Vencido']}"></span>Vencido</span>
+      <span><span class="dot" style="background:${'#E4574C'}"></span>| Línea roja = hoy (02-sep-2026)</span>
+    </div>`;
+}
+
+function renderRiskScatter(){
+  const ctx = document.getElementById('riskScatter');
+  const filtered = INITIATIVES.filter(i=>currentArea==='Todos'||i.area===currentArea);
+  const areas = [...new Set(filtered.map(i=>i.area))];
+  const datasets = areas.map(a=>({
+    label:a,
+    data: filtered.filter(i=>i.area===a).map(i=>({x:i.avance, y:i.dias_para_fin, r: 6+i.n_act*2.2, label:i.title, nombre:i.nombre})),
+    backgroundColor: COLORS[a]+'AA',
+    borderColor: COLORS[a],
+    borderWidth:1.5
+  }));
+  if(charts.scatter) charts.scatter.destroy();
+  charts.scatter = new Chart(ctx, {
+    type:'bubble',
+    data:{ datasets },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{ position:'bottom', labels:{boxWidth:10, font:{size:11}} },
+        tooltip:{ callbacks:{ label:(c)=> `${c.raw.label}: ${c.raw.x}% avance, ${c.raw.y>=0?c.raw.y+'d restantes':Math.abs(c.raw.y)+'d vencido'}` } }
+      },
+      scales:{
+        x:{ title:{display:true, text:'% Avance', font:{size:11}}, min:0, max:100, grid:{color:'#EEF1F6'} },
+        y:{ title:{display:true, text:'Días para vencimiento (- = vencido)', font:{size:11}}, grid:{color:'#EEF1F6'} }
+      }
+    }
+  });
+}
+
+function pillClass(status){ return status.replace(' ',''); }
+
+function renderAlertsTable(){
+  const filtered = ALERTS.filter(a=>currentArea==='Todos'||a.Area===currentArea);
+  const tbody = document.querySelector('#alertsTable tbody');
+  tbody.innerHTML = filtered.map(a=>`
+    <tr>
+      <td><strong>${a.Title}</strong><br><span style="color:var(--muted);font-size:11px;">${a.Nombre}</span></td>
+      <td>${a.Area}</td>
+      <td>${a.Hito}</td>
+      <td>${a.FechaFin}</td>
+      <td>${a.Avance.toFixed(0)}%</td>
+      <td>${a.Estado}</td>
+      <td>${a.motivo}</td>
+    </tr>`).join('');
+}
+
+function renderInitTable(){
+  const filtered = INITIATIVES.filter(i=>currentArea==='Todos'||i.area===currentArea);
+  const tbody = document.querySelector('#initTable tbody');
+  tbody.innerHTML = filtered.map(i=>`
+    <tr>
+      <td><strong>${i.title}</strong></td>
+      <td>${i.nombre}</td>
+      <td>${i.area}</td>
+      <td>${i.n_act}</td>
+      <td>${i.avance.toFixed(1)}%</td>
+      <td>${i.fin}</td>
+      <td><span class="pill ${pillClass(i.status)}">${i.status}</span></td>
+    </tr>`).join('');
+}
+
+function quadrantOf(p){
+  const top = p.brecha > 0, right = p.pctq4 >= 50;
+  if(top && right) return 'Riesgo alto';
+  if(top && !right) return 'Atraso, sin presion Q4';
+  if(!top && right) return 'Dentro de plan, concentrado Q4';
+  return 'Alineado al plan';
+}
+const QUAD_COLOR = { 'Riesgo alto': COLORS.Vencido, 'Atraso, sin presion Q4': COLORS['En riesgo'], 'Dentro de plan, concentrado Q4': COLORS['En riesgo'], 'Alineado al plan': COLORS.Finalizado };
+
+function renderQuadrant(){
+  const filtered = QUADRANT_DATA.filter(p=>currentArea==='Todos'||p.area===currentArea);
+  const W = 760, H = 460;
+  const plotX = 70, plotY = 40, plotW = 600, plotH = 340;
+  const xMin=0, xMax=100, yMin=-45, yMax=45;
+  const xDiv=50, yDiv=0;
+  const xPix = v => plotX + plotW*(v-xMin)/(xMax-xMin);
+  const yPix = v => plotY + plotH*(1-(v-yMin)/(yMax-yMin));
+  const xDivPx = xPix(xDiv), yDivPx = yPix(yDiv);
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%; height:auto; font-family:Arial, sans-serif;">`;
+  // quadrant backgrounds
+  svg += `<rect x="${plotX}" y="${plotY}" width="${xDivPx-plotX}" height="${yDivPx-plotY}" fill="#FDF3E3"/>`; // top-left
+  svg += `<rect x="${xDivPx}" y="${plotY}" width="${plotX+plotW-xDivPx}" height="${yDivPx-plotY}" fill="#FCE7E5"/>`; // top-right
+  svg += `<rect x="${plotX}" y="${yDivPx}" width="${xDivPx-plotX}" height="${plotY+plotH-yDivPx}" fill="#E7F5EF"/>`; // bottom-left
+  svg += `<rect x="${xDivPx}" y="${yDivPx}" width="${plotX+plotW-xDivPx}" height="${plotY+plotH-yDivPx}" fill="#FDF3E3"/>`; // bottom-right
+  svg += `<rect x="${plotX}" y="${plotY}" width="${plotW}" height="${plotH}" fill="none" stroke="#D8DEEA" stroke-width="1"/>`;
+  // dividers
+  svg += `<line x1="${xDivPx}" y1="${plotY}" x2="${xDivPx}" y2="${plotY+plotH}" stroke="#0B1F3A" stroke-width="1" stroke-dasharray="4,3" opacity="0.4"/>`;
+  svg += `<line x1="${plotX}" y1="${yDivPx}" x2="${plotX+plotW}" y2="${yDivPx}" stroke="#0B1F3A" stroke-width="1" stroke-dasharray="4,3" opacity="0.4"/>`;
+  // quadrant labels
+  svg += `<text x="${plotX+8}" y="${plotY+16}" font-size="10.5" font-weight="700" fill="#B67715">ATRASADO VS. PLAN, SIN PRESIÓN DE CIERRE EN Q4</text>`;
+  svg += `<text x="${xDivPx+8}" y="${plotY+16}" font-size="10.5" font-weight="700" fill="#B03A32">RIESGO ALTO: ATRASO Y CIERRE CONCENTRADO EN Q4</text>`;
+  svg += `<text x="${plotX+8}" y="${plotY+plotH-10}" font-size="10.5" font-weight="700" fill="#2E8B67">EJECUCIÓN ALINEADA AL PLAN</text>`;
+  svg += `<text x="${plotX+plotW-8}" y="${plotY+plotH-10}" font-size="10.5" font-weight="700" fill="#B67715" text-anchor="end">DENTRO DE PLAN, PERO CONCENTRADO EN Q4</text>`;
+  // axis ticks
+  [0,25,50,75,100].forEach(gx=>{
+    const px = xPix(gx);
+    svg += `<text x="${px}" y="${plotY+plotH+18}" font-size="9.5" fill="#5B6B87" text-anchor="middle">${gx}%</text>`;
+  });
+  [-40,-20,0,20].forEach(gy=>{
+    const py = yPix(gy);
+    svg += `<text x="${plotX-10}" y="${py+3}" font-size="9.5" fill="#5B6B87" text-anchor="end">${gy}</text>`;
+  });
+  svg += `<text x="${plotX+plotW/2}" y="${plotY+plotH+38}" font-size="10.5" fill="#0B1F3A" text-anchor="middle">% de hitos pendientes con cierre en Q4 (oct-dic 2026)</text>`;
+  svg += `<text x="${plotX-55}" y="${plotY-15}" font-size="10.5" fill="#0B1F3A">Brecha vs. Plan (p.p.)</text>`;
+  // bubbles
+  filtered.forEach(p=>{
+    const q = quadrantOf(p);
+    const color = QUAD_COLOR[q];
+    const px = xPix(p.dx), py = yPix(p.brecha);
+    const r = 7 + p.n*1.6;
+    svg += `<circle cx="${px}" cy="${py}" r="${r}" fill="${color}" fill-opacity="0.85" stroke="#fff" stroke-width="1.5"/>`;
+    const nearBottom = py + r + 14 > plotY+plotH-8;
+    const labelY = nearBottom ? py - r - 6 : py + r + 12;
+    svg += `<text x="${px}" y="${labelY}" font-size="9" font-weight="700" fill="#0B1F3A" text-anchor="middle">${p.title}</text>`;
+  });
+  svg += `</svg>`;
+
+  const counts = { 'Riesgo alto':0, 'Dentro de plan, concentrado Q4':0, 'Atraso, sin presion Q4':0, 'Alineado al plan':0 };
+  const codes = { 'Riesgo alto':[], 'Dentro de plan, concentrado Q4':[], 'Atraso, sin presion Q4':[], 'Alineado al plan':[] };
+  filtered.forEach(p=>{ const q=quadrantOf(p); counts[q]++; codes[q].push(p.title); });
+
+  const panel = `
+    <div style="background:var(--navy); border-radius:10px; padding:16px 18px; color:#fff; font-size:12px; line-height:1.55;">
+      <div style="color:var(--cyan); font-weight:700; font-size:11px; letter-spacing:.4px; margin-bottom:8px;">HALLAZGO CLAVE</div>
+      <div style="font-size:26px; font-weight:800;">${counts['Alineado al plan']}</div>
+      <div style="color:var(--ice); margin-bottom:10px;">iniciativas ${currentArea==='Todos'?'activas':'de '+currentArea} están hoy "alineadas al plan" sin presión de cierre.</div>
+      <div><b style="color:${COLORS.Vencido}">${counts['Riesgo alto']} en riesgo alto:</b> <span style="color:var(--ice)">${codes['Riesgo alto'].join(', ')||'—'}</span></div>
+      <div style="margin-top:8px;"><b style="color:${COLORS['En riesgo']}">${counts['Dentro de plan, concentrado Q4']} dentro de plan, concentradas en Q4:</b> <span style="color:var(--ice)">${codes['Dentro de plan, concentrado Q4'].join(', ')||'—'}</span></div>
+      <div style="margin-top:8px;"><b style="color:${COLORS['En riesgo']}">${counts['Atraso, sin presion Q4']} atrasadas, con holgura:</b> <span style="color:var(--ice)">${codes['Atraso, sin presion Q4'].join(', ')||'—'}</span></div>
+    </div>`;
+
+  document.getElementById('quadrantChart').innerHTML = `
+    <div style="display:grid; grid-template-columns:1.6fr 1fr; gap:16px; align-items:start;">
+      <div>${svg}
+        <div style="font-size:10.5px; color:var(--muted); font-style:italic; margin-top:4px;">Nota: algunas posiciones horizontales se separaron levemente para legibilidad cuando comparten el mismo %; el valor exacto está en la tabla de detalle. Sólo iniciativas activas (excluye finalizadas al 100%).</div>
+      </div>
+      ${panel}
+    </div>`;
+}
+
+function renderAll(){
+  renderKPIs();
+  renderNarrative();
+  renderAreaBars();
+  renderStackedStatus();
+  renderRadar();
+  renderGantt();
+  renderQuadrant();
+  renderRiskScatter();
+  renderAlertsTable();
+  renderInitTable();
+}
+
+document.getElementById('tabs').addEventListener('click', (e)=>{
+  if(!e.target.classList.contains('tab')) return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  e.target.classList.add('active');
+  currentArea = e.target.dataset.area;
+  renderAll();
+});
+
+renderAll();
+</script>
+</body>
+</html>
