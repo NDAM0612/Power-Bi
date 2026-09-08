@@ -1,112 +1,329 @@
-Header_Clouds_Home = 
+M_HTML_Dashboard_POA = 
+VAR AvanceEsperado = FORMAT([M_Avance_Esperado], "0.0%")
+VAR AvanceReal = FORMAT([M_Avance_Real_Promedio], "0.0%")
+VAR GapGlobal = FORMAT([M_Gap_POA], "+0.0%;-0.0%;0.0%")
+VAR GerenciasCriticas = [M_Gerencias_Criticas_Count]
+VAR FechaCorteTexto = FORMAT([M_Fecha_Corte], "dd \de mmmm, yyyy", "es-ES")
+
+RETURN
 "
 <style>
-    /* Contenedor principal responsive */
-    .hero-container {
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+    
+    * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    
+    .poa-dashboard-container {
+        background-color: #f8fafc;
+        padding: 16px;
+        border-radius: 12px;
+        color: #1e293b;
+        width: 100%;
+    }
+
+    /* HEADER */
+    .app-header {
+        background-color: #0f172a;
+        color: #ffffff;
+        padding: 14px 20px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .app-title { font-size: 16px; font-weight: 700; margin: 0; color: #f8fafc; }
+    .app-subtitle { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+    .badge-date {
+        background-color: #1e293b;
+        border: 1px solid #334155;
+        color: #38bdf8;
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    /* KPI GRID */
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    .kpi-card {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .kpi-label { font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: 600; margin-bottom: 4px; }
+    .kpi-value { font-size: 22px; font-weight: 800; line-height: 1.1; }
+    .kpi-subtext { font-size: 10px; color: #64748b; margin-top: 4px; }
+
+    .text-emerald { color: #10b981; }
+    .text-amber { color: #f59e0b; }
+    .text-rose { color: #f43f5e; }
+
+    /* LAYOUT GRID */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.1fr;
+        gap: 16px;
+    }
+
+    .widget-panel {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 14px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        margin-bottom: 16px;
+    }
+    .widget-header {
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 8px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .widget-title { font-size: 13px; font-weight: 700; color: #0f172a; }
+    .widget-tag { font-size: 10px; color: #64748b; }
+
+    /* SCATTER PLOT MOCK */
+    .scatter-container {
         position: relative;
         width: 100%;
-        height: 100vh;
-        min-height: 200px;
-        background-color: #071536; /* Color de fondo superior */
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-        align-items: center;
-        overflow: hidden;
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+        height: 200px;
+        background-color: #fafafa;
+        border: 1px dashed #cbd5e1;
+        border-radius: 6px;
     }
+    .axis-line-x { position: absolute; top: 31.2%; left: 0; right: 0; border-top: 2px dashed #94a3b8; }
+    .axis-line-y { position: absolute; left: 68.8%; top: 0; bottom: 0; border-left: 2px dashed #94a3b8; }
 
-    /* Ajuste del vector SVG de las nubes */
-    .clouds-svg {
-        width: 100%;
-        height: auto;
-        display: block;
-        vertical-align: bottom;
+    .quadrant-label {
+        position: absolute; font-size: 9px; font-weight: 700; text-transform: uppercase;
+        padding: 2px 6px; border-radius: 4px; opacity: 0.85;
     }
+    .q1 { top: 6px; right: 6px; background-color: #d1fae5; color: #065f46; }
+    .q2 { bottom: 6px; right: 6px; background-color: #fef3c7; color: #92400e; }
+    .q3 { bottom: 6px; left: 6px; background-color: #ffe4e6; color: #9f1239; }
+    .q4 { top: 6px; left: 6px; background-color: #e0f2fe; color: #075985; }
 
-    /* Envoltorio del botón de scroll */
-    .scroll-indicator-wrap {
-        position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 20;
+    .bubble {
+        position: absolute; border-radius: 50%; color: #ffffff; font-size: 9px; font-weight: 700;
+        display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.15);
     }
+    .b-tec { left: 80%; top: 12%; width: 28px; height: 28px; background-color: #10b981; }
+    .b-fin { left: 73%; top: 20%; width: 26px; height: 26px; background-color: #10b981; }
+    .b-hum { left: 64%; top: 30%; width: 24px; height: 24px; background-color: #f59e0b; }
+    .b-com { left: 59%; top: 34%; width: 26px; height: 26px; background-color: #f59e0b; }
+    .b-inf { left: 42%; top: 50%; width: 26px; height: 26px; background-color: #f43f5e; }
+    .b-ope { left: 35%; top: 58%; width: 30px; height: 30px; background-color: #f43f5e; }
 
-    /* Estilo del botón circular de scroll */
-    .scroll-button {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 44px;
-        height: 44px;
-        background-color: #FFFFFF;
-        border-radius: 50%;
-        box-shadow: 0 4px 12px rgba(7, 21, 54, 0.15);
-        text-decoration: none;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        animation: bounce 2s infinite;
-    }
+    /* RANKING TABLE */
+    .ranking-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .ranking-table th { background-color: #f1f5f9; color: #475569; font-weight: 700; text-align: left; padding: 8px; }
+    .ranking-table td { padding: 8px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
 
-    .scroll-button:hover {
-        transform: scale(1.1);
-        box-shadow: 0 6px 16px rgba(7, 21, 54, 0.25);
-    }
+    .progress-bar-bg { background-color: #e2e8f0; border-radius: 4px; height: 8px; width: 80px; display: inline-block; overflow: hidden; }
+    .progress-bar-fill { height: 100%; border-radius: 4px; }
 
-    .scroll-button svg {
-        width: 24px;
-        height: 24px;
-        stroke: #071536;
-        stroke-width: 2.5;
-        fill: none;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-    }
+    .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 9px; font-weight: 700; display: inline-block; text-align: center; }
+    .pill-green { background-color: #d1fae5; color: #065f46; }
+    .pill-yellow { background-color: #fef3c7; color: #92400e; }
+    .pill-orange { background-color: #ffedd5; color: #9a3412; }
+    .pill-red { background-color: #ffe4e6; color: #9f1239; }
 
-    /* Animación suave de rebote */
-    @keyframes bounce {
-        0%, 20%, 50%, 80%, 100% {
-            transform: translateY(0);
-        }
-        40% {
-            transform: translateY(-8px);
-        }
-        60% {
-            transform: translateY(-4px);
-        }
+    /* HEATMAP TABLE */
+    .heatmap-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+    .heatmap-table th, .heatmap-table td { padding: 6px; text-align: center; border: 1px solid #ffffff; }
+    .heatmap-table th { background-color: #f1f5f9; color: #475569; font-weight: 600; }
+    .cell-green { background-color: #a7f3d0; color: #064e3b; font-weight: 700; }
+    .cell-yellow { background-color: #fde68a; color: #78350f; font-weight: 700; }
+    .cell-red { background-color: #fca5a5; color: #7f1d1d; font-weight: 700; }
+
+    /* INSIGHT BOX */
+    .insight-box {
+        background-color: #eff6ff;
+        border-left: 4px solid #3b82f6;
+        padding: 10px 14px;
+        border-radius: 0 6px 6px 0;
+        font-size: 11px;
+        color: #1e40af;
+        line-height: 1.5;
     }
 </style>
 
-<div class='hero-container'>
+<div class='poa-dashboard-container'>
 
-    <!-- SVG Vector Layers: Nubes de Fondo, Media y Frontal -->
-    <svg class='clouds-svg' viewBox='0 0 1440 190' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'>
-        <defs>
-            <filter id='bottomShadow' x='0' y='-20%' width='100%' height='140%'>
-                <feDropShadow dx='0' dy='-7' stdDeviation='10' flood-color='#071536' flood-opacity='0.06' />
-            </filter>
-        </defs>
-
-        <!-- Capa Trasera de Nubes -->
-        <path d='M-50,190 L1490,190 L1490,115 Q1390,55 1290,100 Q1170,40 1050,90 Q930,35 810,85 Q690,25 570,80 Q450,35 330,85 Q210,45 90,95 Q15,60 -50,105 Z' fill='#E9EFF7' />
-
-        <!-- Capa Media de Nubes -->
-        <path d='M-50,190 L1490,190 L1490,90 Q1350,35 1230,80 Q1110,20 980,70 Q850,15 720,65 Q590,15 470,70 Q350,20 220,75 Q100,35 -50,85 Z' fill='#F6F9FD' />
-
-        <!-- Capa Frontal con Sombra -->
-        <path d='M-50,190 L1490,190 L1490,65 Q1370,10 1260,50 Q1140,-5 1010,45 Q880,-10 750,45 Q630,-15 490,40 Q360,-10 230,45 Q110,0 -50,60 Z' fill='#FFFFFF' filter='url(#bottomShadow)' />
-    </svg>
-
-    <!-- Indicador Botón de Desplazamiento Inferior -->
-    <div class='scroll-indicator-wrap'>
-        <a href='#mas-informacion' class='scroll-button' aria-label='Ir a la siguiente sección'>
-            <svg viewBox='0 0 24 24'>
-                <polyline points='7 10 12 15 17 10'></polyline>
-            </svg>
-        </a>
+    <!-- HEADER -->
+    <div class='app-header'>
+        <div>
+            <h1 class='app-title'>EVALUACIÓN DEL PLAN OPERATIVO ANUAL (POA)</h1>
+            <div class='app-subtitle'>Sistema de Monitoreo de Desempeño y Diagnóstico de Brechas</div>
+        </div>
+        <div>
+            <span class='badge-date'>Corte: " & FechaCorteTexto & "</span>
+        </div>
     </div>
 
+    <!-- KPI CARDS -->
+    <div class='kpi-row'>
+        <div class='kpi-card'>
+            <div class='kpi-label'>% Avance Esperado</div>
+            <div class='kpi-value text-amber'>" & AvanceEsperado & "</div>
+            <div class='kpi-subtext'>Programado Teórico a la Fecha</div>
+        </div>
+        <div class='kpi-card'>
+            <div class='kpi-label'>% Avance Real Promedio</div>
+            <div class='kpi-value text-rose'>" & AvanceReal & "</div>
+            <div class='kpi-subtext'>Ejecutado Real Consolidado</div>
+        </div>
+        <div class='kpi-card'>
+            <div class='kpi-label'>Brecha Global (Gap)</div>
+            <div class='kpi-value text-rose'>" & GapGlobal & "</div>
+            <div class='kpi-subtext'>Desviación Nivel General</div>
+        </div>
+        <div class='kpi-card'>
+            <div class='kpi-label'>Gerencias en Alerta</div>
+            <div class='kpi-value text-rose'>" & GerenciasCriticas & " / 6</div>
+            <div class='kpi-subtext'>Intervención Urgente</div>
+        </div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class='dashboard-grid'>
+        
+        <!-- COLUMNA IZQUIERDA -->
+        <div>
+            <!-- WIDGET 1: CUADRANTE -->
+            <div class='widget-panel'>
+                <div class='widget-header'>
+                    <span class='widget-title'>1. Matriz de Cuadrante Ejecutiva</span>
+                    <span class='widget-tag'>Scatter Plot UI</span>
+                </div>
+                <div class='scatter-container'>
+                    <div class='axis-line-x'></div>
+                    <div class='axis-line-y'></div>
+                    <div class='quadrant-label q1'>C1: Alto Desempeño</div>
+                    <div class='quadrant-label q2'>C2: En Observación</div>
+                    <div class='quadrant-label q3'>C3: Alerta Crítica</div>
+                    <div class='quadrant-label q4'>C4: Superávit Leve</div>
+
+                    <div class='bubble b-tec'>TEC</div>
+                    <div class='bubble b-fin'>FIN</div>
+                    <div class='bubble b-hum'>HUM</div>
+                    <div class='bubble b-com'>COM</div>
+                    <div class='bubble b-inf'>INF</div>
+                    <div class='bubble b-ope'>OPE</div>
+                </div>
+            </div>
+
+            <!-- WIDGET 3: HEATMAP -->
+            <div class='widget-panel'>
+                <div class='widget-header'>
+                    <span class='widget-title'>3. Análisis Temporal (Heatmap Q1-Q3)</span>
+                    <span class='widget-tag'>Vista Mensual</span>
+                </div>
+                <table class='heatmap-table'>
+                    <thead>
+                        <tr>
+                            <th style='text-align: left;'>Gerencia</th>
+                            <th>Q1</th><th>Q2</th><th>Jul</th><th>Ago</th><th>Sep*</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td style='text-align: left; font-weight:600;'>Tecnología</td><td class='cell-green'>100%</td><td class='cell-green'>95%</td><td class='cell-green'>90%</td><td class='cell-green'>88%</td><td class='cell-green'>82%</td></tr>
+                        <tr><td style='text-align: left; font-weight:600;'>Financiera</td><td class='cell-green'>98%</td><td class='cell-green'>90%</td><td class='cell-green'>85%</td><td class='cell-green'>80%</td><td class='cell-green'>75%</td></tr>
+                        <tr><td style='text-align: left; font-weight:600;'>Comercial</td><td class='cell-green'>90%</td><td class='cell-yellow'>82%</td><td class='cell-yellow'>75%</td><td class='cell-yellow'>68%</td><td class='cell-yellow'>61%</td></tr>
+                        <tr><td style='text-align: left; font-weight:600;'>Infraestructura</td><td class='cell-green'>92%</td><td class='cell-yellow'>78%</td><td class='cell-yellow'>65%</td><td class='cell-red'>52%</td><td class='cell-red'>45%</td></tr>
+                        <tr><td style='text-align: left; font-weight:600;'>Operaciones</td><td class='cell-yellow'>80%</td><td class='cell-yellow'>70%</td><td class='cell-red'>55%</td><td class='cell-red'>42%</td><td class='cell-red'>38%</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA -->
+        <div>
+            <!-- WIDGET 2: RANKING -->
+            <div class='widget-panel'>
+                <div class='widget-header'>
+                    <span class='widget-title'>2. Ranking & Desviación de Cumplimiento</span>
+                    <span class='widget-tag'>Tabla UI</span>
+                </div>
+                <table class='ranking-table'>
+                    <thead>
+                        <tr>
+                            <th>Gerencia</th>
+                            <th>Real / Esperado</th>
+                            <th>Gap</th>
+                            <th>Días Retraso</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><b>G. Tecnología</b></td>
+                            <td><div class='progress-bar-bg'><div class='progress-bar-fill' style='width: 82%; background-color: #10b981;'></div></div> 82%</td>
+                            <td class='text-emerald' style='font-weight: 700;'>+13.2%</td>
+                            <td>0 días</td>
+                            <td><span class='status-pill pill-green'>🟢 En Regla</span></td>
+                        </tr>
+                        <tr>
+                            <td><b>G. Financiera</b></td>
+                            <td><div class='progress-bar-bg'><div class='progress-bar-fill' style='width: 75%; background-color: #10b981;'></div></div> 75%</td>
+                            <td class='text-emerald' style='font-weight: 700;'>+6.2%</td>
+                            <td>0 días</td>
+                            <td><span class='status-pill pill-green'>🟢 En Regla</span></td>
+                        </tr>
+                        <tr>
+                            <td><b>G. Talento Humano</b></td>
+                            <td><div class='progress-bar-bg'><div class='progress-bar-fill' style='width: 66%; background-color: #f59e0b;'></div></div> 66%</td>
+                            <td class='text-amber' style='font-weight: 700;'>-2.8%</td>
+                            <td>12 días</td>
+                            <td><span class='status-pill pill-yellow'>🟡 Tolerancia</span></td>
+                        </tr>
+                        <tr>
+                            <td><b>G. Comercial</b></td>
+                            <td><div class='progress-bar-bg'><div class='progress-bar-fill' style='width: 61%; background-color: #f59e0b;'></div></div> 61%</td>
+                            <td class='text-amber' style='font-weight: 700;'>-7.8%</td>
+                            <td>28 días</td>
+                            <td><span class='status-pill pill-orange'>🟠 En Riesgo</span></td>
+                        </tr>
+                        <tr>
+                            <td><b>G. Infraestructura</b></td>
+                            <td><div class='progress-bar-bg'><div class='progress-bar-fill' style='width: 45%; background-color: #f43f5e;'></div></div> 45%</td>
+                            <td class='text-rose' style='font-weight: 700;'>-23.8%</td>
+                            <td>54 días</td>
+                            <td><span class='status-pill pill-red'>🔴 Crítico</span></td>
+                        </tr>
+                        <tr>
+                            <td><b>G. Operaciones</b></td>
+                            <td><div class='progress-bar-bg'><div class='progress-bar-fill' style='width: 38%; background-color: #f43f5e;'></div></div> 38%</td>
+                            <td class='text-rose' style='font-weight: 700;'>-30.8%</td>
+                            <td>82 días</td>
+                            <td><span class='status-pill pill-red'>🔴 Crítico</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- WIDGET 4: INSIGHTS -->
+            <div class='widget-panel'>
+                <div class='widget-header'>
+                    <span class='widget-title'>4. Diagnóstico Automático (Smart Narrative)</span>
+                    <span class='widget-tag'>DAX Dynamic Narrative</span>
+                </div>
+                <div class='insight-box'>
+                    <strong>Resumen Ejecutivo al Corte (" & FechaCorteTexto & "):</strong><br>
+                    El Plan Operativo Anual muestra un avance promedio del <strong>" & AvanceReal & "</strong> frente a una meta teórica de <strong>" & AvanceEsperado & "</strong>. Se registra una brecha global de <strong>" & GapGlobal & "</strong>. Las gerencias de <strong>Operaciones</strong> e <strong>Infraestructura</strong> concentran el 68% de los días de retraso acumulados (136 días combinados).
+                </div>
+            </div>
+        </div>
+
+    </div>
 </div>
 "
