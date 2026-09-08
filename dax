@@ -1,0 +1,112 @@
+Header_Clouds_Home = 
+"
+<style>
+    /* Contenedor principal responsive */
+    .hero-container {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        min-height: 200px;
+        background-color: #071536; /* Color de fondo superior */
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    /* Ajuste del vector SVG de las nubes */
+    .clouds-svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        vertical-align: bottom;
+    }
+
+    /* Envoltorio del botón de scroll */
+    .scroll-indicator-wrap {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 20;
+    }
+
+    /* Estilo del botón circular de scroll */
+    .scroll-button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 44px;
+        height: 44px;
+        background-color: #FFFFFF;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(7, 21, 54, 0.15);
+        text-decoration: none;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        animation: bounce 2s infinite;
+    }
+
+    .scroll-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 16px rgba(7, 21, 54, 0.25);
+    }
+
+    .scroll-button svg {
+        width: 24px;
+        height: 24px;
+        stroke: #071536;
+        stroke-width: 2.5;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    /* Animación suave de rebote */
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateY(0);
+        }
+        40% {
+            transform: translateY(-8px);
+        }
+        60% {
+            transform: translateY(-4px);
+        }
+    }
+</style>
+
+<div class='hero-container'>
+
+    <!-- SVG Vector Layers: Nubes de Fondo, Media y Frontal -->
+    <svg class='clouds-svg' viewBox='0 0 1440 190' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'>
+        <defs>
+            <filter id='bottomShadow' x='0' y='-20%' width='100%' height='140%'>
+                <feDropShadow dx='0' dy='-7' stdDeviation='10' flood-color='#071536' flood-opacity='0.06' />
+            </filter>
+        </defs>
+
+        <!-- Capa Trasera de Nubes -->
+        <path d='M-50,190 L1490,190 L1490,115 Q1390,55 1290,100 Q1170,40 1050,90 Q930,35 810,85 Q690,25 570,80 Q450,35 330,85 Q210,45 90,95 Q15,60 -50,105 Z' fill='#E9EFF7' />
+
+        <!-- Capa Media de Nubes -->
+        <path d='M-50,190 L1490,190 L1490,90 Q1350,35 1230,80 Q1110,20 980,70 Q850,15 720,65 Q590,15 470,70 Q350,20 220,75 Q100,35 -50,85 Z' fill='#F6F9FD' />
+
+        <!-- Capa Frontal con Sombra -->
+        <path d='M-50,190 L1490,190 L1490,65 Q1370,10 1260,50 Q1140,-5 1010,45 Q880,-10 750,45 Q630,-15 490,40 Q360,-10 230,45 Q110,0 -50,60 Z' fill='#FFFFFF' filter='url(#bottomShadow)' />
+    </svg>
+
+    <!-- Indicador Botón de Desplazamiento Inferior -->
+    <div class='scroll-indicator-wrap'>
+        <a href='#mas-informacion' class='scroll-button' aria-label='Ir a la siguiente sección'>
+            <svg viewBox='0 0 24 24'>
+                <polyline points='7 10 12 15 17 10'></polyline>
+            </svg>
+        </a>
+    </div>
+
+</div>
+"
