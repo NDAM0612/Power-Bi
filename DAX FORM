@@ -1,0 +1,41 @@
+// 1. Fecha de Corte Parametrizada (Hoy)
+M_Fecha_Corte = TODAY()
+
+// 2. Avance Esperado Teórico (%)
+M_Avance_Esperado = 
+VAR DiasTranscurridos = DATEDIFF(DATE(YEAR([M_Fecha_Corte]), 1, 1), [M_Fecha_Corte], DAY)
+VAR DiasAnio = DATEDIFF(DATE(YEAR([M_Fecha_Corte]), 1, 1), DATE(YEAR([M_Fecha_Corte]), 12, 31), DAY)
+RETURN DIVIDE(DiasTranscurridos, DiasAnio, 0)
+
+// 3. Avance Real Promedio (%)
+// Usa tu columna 'Registro Avance'
+M_Avance_Real_Promedio = 
+AVERAGE('data_POA'[Registro Avance])
+
+// 4. Gap / Brecha Global (%)
+M_Gap_POA = [M_Avance_Real_Promedio] - [M_Avance_Esperado]
+
+// 5. Total de Gerencias en Alerta Crítica (Gap < -20%)
+// Usa tu columna 'Gerencia Responsable'
+M_Gerencias_Criticas_Count = 
+CALCULATE(
+    COUNTROWS(
+        FILTER(
+            VALUES('data_POA'[Gerencia Responsable]),
+            ([M_Avance_Real_Promedio] - [M_Avance_Esperado]) < -0.20
+        )
+    )
+)
+
+// 6. Días de Retraso Acumulados
+// Usa tu columna 'Fecha Fin' y 'Estado'
+M_Dias_Retraso_Acumulados = 
+SUMX(
+    FILTER(
+        'data_POA',
+        'data_POA'[Estado] <> "Completado" 
+        && 'data_POA'[Estado] <> "Finalizado" 
+        && 'data_POA'[Fecha Fin] < [M_Fecha_Corte]
+    ),
+    INT([M_Fecha_Corte] - 'data_POA'[Fecha Fin])
+)
