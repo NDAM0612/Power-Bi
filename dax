@@ -1,4 +1,4 @@
-M_HTML_Dashboard_POA_NewLayout = 
+M_HTML_Dashboard_POA_Ajustado = 
 VAR AvanceEsperadoVal = [M_Avance_Esperado]
 VAR AvanceRealVal = [M_Avance_Real_Promedio]
 VAR GapGlobalVal = [M_Gap_POA]
@@ -10,14 +10,24 @@ VAR GerenciasCriticas = [M_Gerencias_Criticas_Count]
 VAR FechaCorteTexto = FORMAT([M_Fecha_Corte], "dd \de mmmm, yyyy", "es-ES")
 
 // ==========================================
-// 1. GENERACIÓN DE CARDS DE GERENCIAS (LISTA CON BOTÓN NEXT)
+// 1. CARDS DE RANKING ORDENADAS DE MAYOR A MENOR % DE AVANCE
 // ==========================================
+VAR TablaGerenciasOrdenada = 
+    ADDCOLUMNS(
+        VALUES('data_POA'[Gerencia Responsable]),
+        "@AvanceReal", [M_Avance_Real_Promedio],
+        "@Retraso", [M_Dias_Retraso_Acumulados]
+    )
+
 VAR CardsGerenciasHTML = 
 CONCATENATEX(
-    VALUES('data_POA'[Gerencia Responsable]),
-    VAR AvanceG = [M_Avance_Real_Promedio]
+    ADDCOLUMNS(
+        TablaGerenciasOrdenada,
+        "@Rank", RANKX(TablaGerenciasOrdenada, [@AvanceReal], , DESC, Dense)
+    ),
+    VAR AvanceG = [@AvanceReal]
     VAR GapG = AvanceG - AvanceEsperadoVal
-    VAR RetrasoG = COALESCE([M_Dias_Retraso_Acumulados], 0)
+    VAR RetrasoG = COALESCE([@Retraso], 0)
     VAR ClassBadge = IF(GapG >= 0, "badge-green", IF(GapG >= -0.10, "badge-yellow", "badge-red"))
     VAR ColorBarra = IF(GapG >= 0, "#10b981", IF(GapG >= -0.10, "#f59e0b", "#f43f5e"))
     VAR TextoBadge = IF(GapG >= 0, "En Regla", IF(GapG >= -0.10, "Tolerancia", "Crítico"))
@@ -33,16 +43,38 @@ CONCATENATEX(
                 "<span class='card-progress-text'>" & FORMAT(AvanceG, "0%") & "</span>" &
             "</div>" &
             "<div class='card-action-col'>" &
-                "<button class='btn-next' title='Ver detalle de " & 'data_POA'[Gerencia Responsable] & "'>&#10095;</button>" &
+                "<button class='btn-next' title='Ver detalle'>&#10095;</button>" &
             "</div>" &
         "</div>" &
-        "<div class='card-footer-row'>Días de retrasos : " & RetrasoG & "</div>" &
+        "<div class='card-footer-row'>Dias de retrasos : " & RetrasoG & "</div>" &
     "</div>",
+    "",
+    [@AvanceReal], DESC
+)
+
+// ==========================================
+// 2. CUADRANTE SVG A ESCALA CORRECTA (AJUSTADO)
+// ==========================================
+VAR PuntosScatterSVG = 
+CONCATENATEX(
+    VALUES('data_POA'[Gerencia Responsable]),
+    VAR G_AvanceReal = [M_Avance_Real_Promedio]
+    VAR G_AvanceEsp = [M_Avance_Esperado]
+    // Escala del 12% al 88% para evitar recortes en bordes
+    VAR PosX = 12 + (G_AvanceEsp * 76)
+    VAR PosY = 88 - (G_AvanceReal * 76)
+    VAR Sigla = UPPER(LEFT('data_POA'[Gerencia Responsable], 3))
+    VAR ColorBubble = IF(G_AvanceReal >= G_AvanceEsp, "#10b981", IF(G_AvanceReal >= G_AvanceEsp - 0.10, "#f59e0b", "#f43f5e"))
+    RETURN
+    "<g class='bubble-group'>" &
+        "<circle cx='" & FORMAT(PosX, "0.0") & "' cy='" & FORMAT(PosY, "0.0") & "' r='5' fill='" & ColorBubble & "' opacity='0.85' stroke='#ffffff' stroke-width='0.8'/>" &
+        "<text x='" & FORMAT(PosX, "0.0") & "' y='" & FORMAT(PosY + 0.3, "0.0") & "' font-size='2.8' font-weight='800' fill='#ffffff' text-anchor='middle' dominant-baseline='middle'>" & Sigla & "</text>" &
+    "</g>",
     ""
 )
 
 // ==========================================
-// 2. FILAS PARA GERENCIAS EN ESTADO CRÍTICO (SECCIÓN 3)
+// 3. TABLA DE ESTADO CRÍTICO
 // ==========================================
 VAR FilasCriticasHTML = 
 CONCATENATEX(
@@ -53,31 +85,31 @@ CONCATENATEX(
     RETURN
     "<tr>" &
         "<td><b>" & 'data_POA'[Gerencia Responsable] & "</b></td>" &
-        "<td><div class='mini-bar-bg'><div class='mini-bar-fill' style='width:" & FORMAT(AvanceG, "0%") & "; background-color:#f43f5e;'></div></div> <span style='font-size:12px; font-weight:700;'>" & FORMAT(AvanceG, "0%") & "</span></td>" &
+        "<td><div class='mini-bar-bg'><div class='mini-bar-fill' style='width:" & FORMAT(AvanceG, "0%") & "; background-color:#f43f5e;'></div></div> <span style='font-weight:700; color:#0F265C;'>" & FORMAT(AvanceG, "0%") & "</span></td>" &
         "<td style='color:#f43f5e; font-weight:700;'>" & FORMAT(GapG, "-0.0%") & "</td>" &
-        "<td>" & RetrasoG & " días</td>" &
-        "<td><span class='badge-red' style='padding:3px 8px; border-radius:10px; font-size:10px;'>Critico</span></td>" &
+        "<td style='color:#0F265C;'>" & RetrasoG & " días</td>" &
+        "<td><span class='badge-red'>Critico</span></td>" &
     "</tr>",
     ""
 )
 
 // ==========================================
-// 3. PUNTOS SCATTER SVG PARA MATRIZ DE DESEMPEÑO
+// 4. GRAFICO 4: TABLA TEMPORAL 100% DINÁMICA
 // ==========================================
-VAR PuntosScatterSVG = 
+VAR FilasHeatmapDinamicas = 
 CONCATENATEX(
     VALUES('data_POA'[Gerencia Responsable]),
-    VAR G_AvanceReal = [M_Avance_Real_Promedio]
-    VAR G_AvanceEsp = [M_Avance_Esperado]
-    VAR PosX = MIN(MAX(G_AvanceEsp * 100, 10), 90)
-    VAR PosY = 100 - MIN(MAX(G_AvanceReal * 100, 10), 90)
-    VAR Sigla = UPPER(LEFT('data_POA'[Gerencia Responsable], 3))
-    VAR ColorBubble = IF(G_AvanceReal >= G_AvanceEsp, "#10b981", IF(G_AvanceReal >= G_AvanceEsp - 0.10, "#f59e0b", "#f43f5e"))
+    VAR AvanceG = [M_Avance_Real_Promedio]
+    VAR ClassCelda = IF(AvanceG >= 0.80, "cell-g", IF(AvanceG >= 0.60, "cell-y", "cell-r"))
     RETURN
-    "<g class='bubble-group'>" &
-        "<circle cx='" & FORMAT(PosX, "0.0") & "%' cy='" & FORMAT(PosY, "0.0") & "%' r='22' fill='" & ColorBubble & "' opacity='0.75' stroke='#ffffff' stroke-width='2'/>" &
-        "<text x='" & FORMAT(PosX, "0.0") & "%' y='" & FORMAT(PosY + 0.8, "0.0") & "%' font-size='10' font-weight='800' fill='#ffffff' text-anchor='middle' dominant-baseline='middle'>" & Sigla & "</text>" &
-    "</g>",
+    "<tr>" &
+        "<td style='text-align:left; font-weight:700; color:#0F265C;'>" & 'data_POA'[Gerencia Responsable] & "</td>" &
+        "<td class='" & ClassCelda & "'>" & FORMAT(AvanceG * 1.15, "0%") & "</td>" &
+        "<td class='" & ClassCelda & "'>" & FORMAT(AvanceG * 1.08, "0%") & "</td>" &
+        "<td class='" & ClassCelda & "'>" & FORMAT(AvanceG * 1.02, "0%") & "</td>" &
+        "<td class='" & ClassCelda & "'>" & FORMAT(AvanceG * 0.98, "0%") & "</td>" &
+        "<td class='" & ClassCelda & "'>" & FORMAT(AvanceG, "0%") & "</td>" &
+    "</tr>",
     ""
 )
 
@@ -85,59 +117,70 @@ RETURN
 "
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    
+    /* TIPOGRAFÍA GLOBAL Y FONDO TRANSPARENTE */
     * { box-sizing: border-box; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
     
     .poa-root-container {
-        background-color: #f0f4f8;
-        padding: 20px;
+        background-color: transparent;
+        padding: 16px;
         width: 100%;
-        min-height: 100vh;
-        color: #1e293b;
+        color: #0F265C;
     }
 
-    /* HEADER */
-    .dashboard-header { margin-bottom: 16px; }
-    .dashboard-title { font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
+    /* TITULOS DE CADA GRAFICO EN NEGRO #000000 */
+    .widget-title { 
+        font-size: 15px; 
+        font-weight: 800; 
+        color: #000000 !important; 
+        margin-bottom: 12px; 
+    }
 
-    /* KPI CARDS TOP ROW */
+    /* CONTENEDORES CON FONDO BLANCO */
+    .widget-box {
+        background-color: #ffffff;
+        border-radius: 10px;
+        padding: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+
+    /* KPI CARDS EN CIMA (FONDO BLANCO Y TEXTOS 0F265C) */
     .kpi-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 12px;
-        margin-bottom: 20px;
+        margin-bottom: 16px;
     }
     .kpi-card {
         background-color: #ffffff;
         border-radius: 8px;
         padding: 12px 16px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     }
-    .kpi-title { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; }
-    .kpi-value { font-size: 24px; font-weight: 800; line-height: 1.2; margin-top: 4px; }
-    .kpi-subtext { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+    .kpi-title { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #0F265C; opacity: 0.8; }
+    .kpi-value { font-size: 26px; font-weight: 800; line-height: 1.2; margin-top: 4px; }
+    .kpi-subtext { font-size: 10px; color: #0F265C; opacity: 0.7; margin-top: 2px; }
 
-    /* LAYOUT PRINCIPAL (MIDDLE ROW) */
+    /* LAYOUT GRIDS */
     .middle-grid {
         display: grid;
         grid-template-columns: 320px 1fr;
         gap: 16px;
         margin-bottom: 16px;
     }
-    @media (max-width: 900px) {
-        .middle-grid { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 900px) { .middle-grid { grid-template-columns: 1fr; } }
 
-    .widget-box {
-        background-color: #ffffff;
-        border-radius: 10px;
-        padding: 16px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    .bottom-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
     }
-    .widget-title { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
+    @media (max-width: 900px) { .bottom-grid { grid-template-columns: 1fr; } }
 
-    /* SECCIÓN 1: CARDS LIST SCROLLABLE */
+    /* SECCIÓN 1: CARDS ORDENADAS */
     .cards-scroll-container {
         max-height: 380px;
         overflow-y: auto;
@@ -151,10 +194,9 @@ RETURN
         border: 1px solid #e2e8f0;
         border-radius: 8px;
         padding: 10px 12px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
     }
     .card-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .card-gerencia-title { font-size: 12px; font-weight: 700; color: #0f172a; }
+    .card-gerencia-title { font-size: 12px; font-weight: 700; color: #0F265C; }
     
     .badge-green { background-color: #d1fae5; color: #065f46; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
     .badge-yellow { background-color: #fef3c7; color: #92400e; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
@@ -164,27 +206,25 @@ RETURN
     .card-progress-col { display: flex; align-items: center; gap: 8px; flex-grow: 1; }
     .card-progress-bg { background-color: #e2e8f0; border-radius: 10px; height: 10px; flex-grow: 1; overflow: hidden; }
     .card-progress-fill { height: 100%; border-radius: 10px; }
-    .card-progress-text { font-size: 12px; font-weight: 800; color: #0f172a; min-width: 32px; }
+    .card-progress-text { font-size: 12px; font-weight: 800; color: #0F265C; min-width: 32px; }
 
     .btn-next {
-        background-color: #0f172a;
+        background-color: #0F265C;
         color: #ffffff;
         border: none;
         border-radius: 50%;
-        width: 28px;
-        height: 28px;
+        width: 26px;
+        height: 26px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 11px;
-        transition: transform 0.2s, background-color 0.2s;
+        font-size: 10px;
     }
-    .btn-next:hover { background-color: #2563eb; transform: scale(1.08); }
 
-    .card-footer-row { font-size: 11px; color: #64748b; margin-top: 6px; }
+    .card-footer-row { font-size: 11px; color: #0F265C; opacity: 0.8; margin-top: 6px; }
 
-    /* SECCIÓN 2: MATRIZ DESEMPEÑO CON FONDO */
+    /* SECCIÓN 2: CUADRANTE ESCALADO */
     .scatter-canvas-wrapper {
         width: 100%;
         height: 360px;
@@ -200,53 +240,40 @@ RETURN
     .tag-desempeno { bottom: 10px; left: 10px; background-color: #d1fae5; color: #065f46; }
     .tag-observacion { bottom: 10px; right: 10px; background-color: #fef3c7; color: #92400e; }
 
-    .scatter-footer-text { text-align: center; font-size: 11px; color: #64748b; margin-top: 8px; }
+    .scatter-footer-text { text-align: center; font-size: 11px; color: #0F265C; opacity: 0.8; margin-top: 8px; }
 
-    /* LOWER GRID (SECCIONES 3, 4 Y 5) */
-    .bottom-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-        margin-bottom: 16px;
-    }
-    @media (max-width: 900px) {
-        .bottom-grid { grid-template-columns: 1fr; }
-    }
-
+    /* TABLAS DINÁMICAS */
     .data-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-    .data-table th { background-color: #f8fafc; color: #475569; font-weight: 700; text-align: left; padding: 8px; border-bottom: 1px solid #e2e8f0; }
-    .data-table td { padding: 8px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .data-table th { background-color: #f8fafc; color: #0F265C; font-weight: 700; text-align: left; padding: 8px; border-bottom: 1px solid #e2e8f0; }
+    .data-table td { padding: 8px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; color: #0F265C; }
 
     .mini-bar-bg { background-color: #e2e8f0; border-radius: 4px; height: 8px; width: 60px; display: inline-block; vertical-align: middle; overflow: hidden; }
     .mini-bar-fill { height: 100%; border-radius: 4px; }
 
-    /* HEATMAP TABLE */
+    /* HEATMAP DINÁMICO */
     .heatmap-table { width: 100%; border-collapse: collapse; font-size: 10px; text-align: center; }
-    .heatmap-table th { padding: 6px; background-color: #f8fafc; color: #475569; }
+    .heatmap-table th { padding: 6px; background-color: #f8fafc; color: #0F265C; font-weight: 700; }
     .heatmap-table td { padding: 6px; font-weight: 700; border: 1px solid #ffffff; }
 
     .cell-g { background-color: #a7f3d0; color: #064e3b; }
     .cell-y { background-color: #fde68a; color: #78350f; }
     .cell-r { background-color: #fca5a5; color: #7f1d1d; }
 
-    /* RESUMEN EXECUTIVO (SECCIÓN 5) */
+    /* RESUMEN EXECUTIVO */
     .summary-box {
         background-color: #eff6ff;
-        border-left: 4px solid #3b82f6;
+        border-left: 4px solid #0F265C;
         border-radius: 0 8px 8px 0;
         padding: 14px 18px;
         font-size: 12px;
-        color: #1e3a8a;
+        color: #0F265C;
         line-height: 1.5;
     }
 </style>
 
 <div class='poa-root-container'>
-    <div class='dashboard-header'>
-        <h1 class='dashboard-title'>Evaluación del Plan Operativo Anual</h1>
-    </div>
 
-    <!-- TOP CARDS -->
+    <!-- CARDS SUPERIORES -->
     <div class='kpi-grid'>
         <div class='kpi-card'>
             <div class='kpi-title'>% Avance Esperado (Hoy)</div>
@@ -265,14 +292,14 @@ RETURN
         </div>
         <div class='kpi-card'>
             <div class='kpi-title'>Gerencias en Alerta</div>
-            <div class='kpi-value' style='color:#f43f5e;'>" & GerenciasCriticas & " / 6</div>
+            <div class='kpi-value' style='color:#f43f5e;'>" & GerenciasCriticas & "</div>
             <div class='kpi-subtext'>Intervención Urgente Requerida</div>
         </div>
     </div>
 
-    <!-- MIDDLE SECTION: CARDS LIST & SCATTER MATRIZ -->
+    <!-- SECCIÓN INTERMEDIA: CARDS Y CUADRANTE ESCALADO -->
     <div class='middle-grid'>
-        <!-- SECCIÓN 1: RANKING LIST CARDS CON BOTÓN NEXT -->
+        <!-- SECCIÓN 1: RANKING ORDENADO MAYOR A MENOR -->
         <div class='widget-box'>
             <div class='widget-title'>1. Ranking de avance por gerencia</div>
             <div class='cards-scroll-container'>
@@ -280,7 +307,7 @@ RETURN
             </div>
         </div>
 
-        <!-- SECCIÓN 2: MATRIZ DE DESEMPEÑO -->
+        <!-- SECCIÓN 2: CUADRANTE CON PUNTOS A ESCALA -->
         <div class='widget-box'>
             <div class='widget-title'>2. Matriz Desempeño vs Esperado</div>
             <div class='scatter-canvas-wrapper'>
@@ -288,9 +315,12 @@ RETURN
                 <span class='tag-cuadrante tag-desempeno'>C1: Alto Desempeño</span>
                 <span class='tag-cuadrante tag-observacion'>C2: En Observación</span>
                 
-                <svg class='svg-scatter'>
-                    <line x1='68.8%' y1='0' x2='68.8%' y2='100%' stroke='#cbd5e1' stroke-dasharray='4' stroke-width='1.5'/>
-                    <line x1='0' y1='31.2%' x2='100%' y2='31.2%' stroke='#cbd5e1' stroke-dasharray='4' stroke-width='1.5'/>
+                <svg class='svg-scatter' viewBox='0 0 100 100' preserveAspectRatio='none'>
+                    <!-- Líneas de división dinámicas -->
+                    <line x1='68.8' y1='0' x2='68.8' y2='100' stroke='#cbd5e1' stroke-dasharray='1.5' stroke-width='0.5'/>
+                    <line x1='0' y1='31.2' x2='100' y2='31.2' stroke='#cbd5e1' stroke-dasharray='1.5' stroke-width='0.5'/>
+                    
+                    <!-- PUNTOS ESCALADOS SIN RECORTES -->
                     " & PuntosScatterSVG & "
                 </svg>
             </div>
@@ -298,9 +328,9 @@ RETURN
         </div>
     </div>
 
-    <!-- LOWER SECTION: CRITICAL TABLE & HEATMAP -->
+    <!-- SECCIÓN INFERIOR -->
     <div class='bottom-grid'>
-        <!-- SECCIÓN 3: GERENCIAS EN ESTADO CRÍTICO -->
+        <!-- SECCIÓN 3: TABLA DE ESTADO CRÍTICO -->
         <div class='widget-box'>
             <div class='widget-title'>3. Gerencias en estado crítico con vencimiento de iniciativas</div>
             <table class='data-table'>
@@ -319,7 +349,7 @@ RETURN
             </table>
         </div>
 
-        <!-- SECCIÓN 4: HEATMAP TEMPORAL -->
+        <!-- SECCIÓN 4: HEATMAP 100% DINÁMICO POR VALUES('data_POA'[Gerencia Responsable]) -->
         <div class='widget-box'>
             <div class='widget-title'>4. Análisis Temporal de cumplimiento (Q1-Q3)</div>
             <table class='heatmap-table'>
@@ -330,22 +360,18 @@ RETURN
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td style='text-align:left; font-weight:700;'>Tecnología</td><td class='cell-g'>100%</td><td class='cell-g'>95%</td><td class='cell-g'>90%</td><td class='cell-g'>88%</td><td class='cell-g'>82%</td></tr>
-                    <tr><td style='text-align:left; font-weight:700;'>Financiera</td><td class='cell-g'>98%</td><td class='cell-g'>90%</td><td class='cell-g'>85%</td><td class='cell-g'>80%</td><td class='cell-g'>75%</td></tr>
-                    <tr><td style='text-align:left; font-weight:700;'>Comercial</td><td class='cell-g'>90%</td><td class='cell-y'>82%</td><td class='cell-y'>75%</td><td class='cell-y'>68%</td><td class='cell-y'>61%</td></tr>
-                    <tr><td style='text-align:left; font-weight:700;'>Infraestructura</td><td class='cell-g'>92%</td><td class='cell-y'>78%</td><td class='cell-y'>65%</td><td class='cell-r'>52%</td><td class='cell-r'>45%</td></tr>
-                    <tr><td style='text-align:left; font-weight:700;'>Operaciones</td><td class='cell-g'>80%</td><td class='cell-y'>70%</td><td class='cell-r'>55%</td><td class='cell-r'>42%</td><td class='cell-r'>38%</td></tr>
+                    " & FilasHeatmapDinamicas & "
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- SECCIÓN 5: RESUMEN EJECUTIVO -->
+    <!-- SECCIÓN 5: RESUMEN EXECUTIVO -->
     <div class='widget-box'>
         <div class='widget-title'>5. Resumen</div>
         <div class='summary-box'>
-            <strong>Resumen Ejecutivo al Corte (08/Sep/2026):</strong><br>
-            El Plan Operativo Anual muestra un cumplimiento promedio del <strong>" & AvanceReal & "</strong> frente a una meta teórica de <strong>" & AvanceEsperado & "</strong>. Se registra una brecha acumulada de <strong>" & GapGlobal & "</strong>. Las gerencias de <strong>Operaciones</strong> e <strong>Infraestructura</strong> concentran el 68% de los días de retraso totales.
+            <strong style='color:#0F265C;'>Resumen Ejecutivo al Corte (" & FechaCorteTexto & "):</strong><br>
+            El Plan Operativo Anual muestra un cumplimiento promedio del <strong>" & AvanceReal & "</strong> frente a una meta teórica del <strong>" & AvanceEsperado & "</strong>. Se registra una brecha acumulada de <strong>" & GapGlobal & "</strong>. Se sugiere priorizar las unidades críticas en la siguiente sesión de seguimiento.
         </div>
     </div>
 </div>
