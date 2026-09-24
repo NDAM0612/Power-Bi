@@ -1,0 +1,426 @@
+import os
+import pandas as pd
+import re
+from datetime import datetime
+import openpyxl
+import numpy as np
+from pathlib import Path
+
+def obtener_anio():
+    ahora = datetime.now()
+    anio = ahora.year
+    return str(anio)
+
+def obtener_mes():
+    ahora = datetime.now()
+    mes_numero = ahora.month
+    meses = [
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ]
+    mes = meses[mes_numero - 1]
+    return mes
+
+def numero_mes():
+    ahora = datetime.now()
+    mes_numero = ahora.month
+    return mes_numero
+
+def crear_archivo_excel(ruta):
+    libro = openpyxl.Workbook()
+    hoja = libro.active
+    hoja.title = 'Detalle'
+    libro.save(ruta)
+    return ruta
+
+def procesar_descripcion(descripcion):
+    if pd.isna(descripcion):
+        return '', '', '', '', '', '', ''
+    
+    descripcion_patron = re.compile(r'([0-9.]+)(-([0-9.]+))?:?\s*(.*?):\s*\[(PASSED|FAILED|NULL|ERROR|WARNING)\][\s\S]*?(?:See Also:.*?\n)?(.*?\n)?[\s\S]*?Policy Value:\n(?:CONFIG _CHECK_NOT|CONFIG_CHECK|SHOW_CONFIG_CHECK)?\s*([\s\S]*?)\s*(?:Actual Value:|Error:)\s*([\s\S]*)', re.DOTALL)
+    match_descripcion = descripcion_patron.search(descripcion)
+    if match_descripcion:
+        item = match_descripcion.group(1).strip()
+        subitem = match_descripcion.group(3).strip() if match_descripcion.group(3) else ''
+        detalle = match_descripcion.group(4).strip()
+        cumplimiento = match_descripcion.group(5).strip()
+        valor_esperado = match_descripcion.group(7).strip()
+        valor_hallado = match_descripcion.group(8).strip() 
+        criticidad = match_descripcion.group(6).strip()
+    else:
+        item = ''
+        subitem = ''
+        detalle = ''
+        cumplimiento = ''
+        valor_esperado = ''
+        valor_hallado = ''
+        criticidad = ''
+        
+    return item, subitem, criticidad, cumplimiento, detalle, valor_esperado, valor_hallado
+
+def obtener_observacion(description):
+    if isinstance(description, str):
+        if 'this audit check is not running as root' in description.lower() or 'ksh: fpm: cannot execute' in description.lower() \
+            or 'file permission denied: /etc/audit/rules.d/audit.rules' in description.lower()\
+            or 'file permission denied: /etc/ssh/sshd_config' in description.lower()\
+            or 'file permission denied: /etc/security' in description.lower()\
+            or 'file permission denied: /etc/securetty' in description.lower()\
+            or 'file permission denied: /etc/shadow' in description.lower()\
+            or 'file permission denied: /etc/default/useradd' in description.lower()\
+            or 'could not execute command' in description.lower()\
+            or 'must be privileged' in description.lower() or 'error: insufficient privileges for action' in description.lower()\
+            or 'insufficient privileges' in description.lower() \
+            or 'attribute "account_locked" is not valid' in description.lower() \
+            or 'attribute "sugroups" is not valid' in description.lower() \
+            or 'cannot open /etc/issue' in description.lower() \
+            or '/etc/ssh/sshd_config: permission denied' in description.lower()\
+            or 'file permission denied: /etc/rsyslog.conf' in description.lower()\
+            or 'file permission denied: /etc/rsyslog.conf' in description.lower()\
+            or 'find: \'/boot/efi\': permission denied' in description.lower()\
+            or 'find: \'/boot/grub2\': permission denied' in description.lower()\
+            or 'find: \'/boot/loader/entries\': permission denied' in description.lower()\
+            or '/usr/bin/grep: /etc/sudoers: permission denied' in description.lower()\
+            or '/usr/bin/grep: /etc/sudoers.d: permission denied' in description.lower()\
+            or 'ssh-keygen: /home/usrparom/.ssh/authorized_keys: permission denied' in description.lower()\
+            or 'ssh-keygen: /home/usrparoa/.ssh/authorized_keys: permission denied' in description.lower()\
+            or 'ssh-keygen: /home/usrparob/.ssh/authorized_keys: permission denied' in description.lower()\
+            or 'find: \'/boot/loader/entries\': permission denied' in description.lower()\
+            or 'find: \'/boot/grub2\': permission denied' in description.lower()\
+            or 'find: \'/boot/lost+found\': permission denied' in description.lower()\
+            or 'find: \'/boot/efi\': permission denied' in description.lower()\
+            or 'grep: ./grub.cfg: no such file or directory' in description.lower()\
+            or 'grep: ./grub.cfg: no such file or directory' in description.lower()\
+            or 'find: \'/home/*\': permission denied' in description.lower()\
+            or '/usr/bin/grep: /etc/sudoers.d/ansible_usrtaroa: permission denied' in description.lower()\
+            or 'ssh-keygen: /home/usrtarom/.ssh/authorized_keys: permission denied' in description.lower()\
+            or 'ssh-keygen: /home/usrtaroa/.ssh/authorized_keys: permission denied' in description.lower()\
+            or 'ssh-keygen: /home/usrtarob/.ssh/authorized_keys: permission denied' in description.lower()\
+            or 'grep: /etc/security/limits.d/awx.conf: permission denied' in description.lower()\
+            or 'find: \'/boot/efi/efi/redhat\': permission denied' in description.lower()\
+            or 'find: \'/boot/grub2\': permission denied' in description.lower()\
+            or 'find: \'/boot/loader/entries\': permission denied' in description.lower()\
+            or 'mdb: failed to open /dev/ksyms: permission denied' in description.lower()\
+            or '/usr/bin/grep: /etc/sudoers.d/ansible_usrparoa: permission denied' in description.lower()\
+            or '/etc/sudoers.d/*: permission denied' in description.lower()\
+            or 'permission denied' in description.lower()\
+            or 'sh: sysctl: command not found' in description.lower():
+            return 'Privilegios insuficientes'
+        elif 'sh: sysctl: command not found' in description.lower() or 'tcb systems' in description.lower():
+            return 'Comando incompatible'
+        elif 'command output has been interrupted' in description.lower()\
+            or 'timeout obtaining lock' in description.lower()\
+            or 'could not execute command' in description.lower():
+            return 'Problemas de latencia'
+        elif 'powershell command returned no result' in description.lower():
+                return 'PowerShell deshabilitado'
+        elif 'command did not complete due to timeout or other error' in description.lower():
+                return 'Timeout'
+    return ''
+
+def obtener_justificacion(output):
+    if isinstance(output, str):
+        if 'failed to authenticate using the supplied password' in output.lower():
+            return 'Credenciales inválidas'
+        elif 'is considered as dead' in output.lower():
+            return 'Considerado muerto'
+        elif 'open_connection failed: no remote version received' in output.lower():
+            return 'Bloqueo de firewall'
+        elif 'your password has expired' in output.lower()\
+        or 'your account has expired' in output.lower():
+            return "Contraseña expirada"
+        elif 'failed to authenticate using publickey authentication' in output.lower()\
+            or 'message     : public key authentication failed' in output.lower():
+            return "Error en llave SSH"
+        elif 'failed to authenticate using the supplied password' in output.lower()\
+            or 'nessus was unable to log into the following host for which credentials have been provided :' in output.lower()\
+            or 'invalid credential' in output.lower():
+            return 'Credenciales inválidas'
+        elif 'admin$' in output.lower():
+                return 'No acceso a RC ADMIN$'
+    return ''
+
+def obtener_escaneo(item, justificacion):
+    if item != '':
+        return 'ESCANEADO'
+    elif justificacion != '':
+        return 'NO ESCANEADO'
+    
+def prioridad_escaneo(escaneo):
+    if escaneo == 'ESCANEADO':
+        return 1
+    if escaneo == 'NO ESCANEADO':
+        return 2
+    if escaneo is None or escaneo == '':
+        return 3
+
+def sensor(filename):
+
+    if "op_" in filename.lower():
+        pattern = re.compile(r'(?:[^_]*_){2}([^_]*)')
+    else:
+        pattern = re.compile(r'(?:[^_]*_){1}([^_]*)')
+
+    match = pattern.search(filename)
+
+    if match:
+        return match.group(1).strip()
+
+    return ''
+
+def obtener_so(texto):
+    texto=str(texto).upper()
+    match = re.search(r'.*?(RED HAT).+(\d+\.\d+).+', texto)
+    if match:
+        return f'{match.group(1)} {match.group(2)}'
+    match = re.search(r'.*?(AIX 7)(\.\d+).+', texto)
+    if match:
+        return f'{match.group(1)}{match.group(2)}'
+    match = re.search(r'.*?(SOLARIS).+?([0-9]+).+',texto)
+    if match:
+        return f'{match.group(1)} {match.group(2)}'
+    match = re.search(r'.*?(UBUNTU).+?([0-9]+\.[0-9]+)',texto)
+    if match:
+        return f'{match.group(1)} {match.group(2)}'
+    
+def obtener_infraestructura(nombre_archivo):
+    infraestructura = ''
+    if isinstance(nombre_archivo, str):
+        if 'aws' in nombre_archivo.lower():
+            infraestructura = 'AWS'
+        if 'azure' in nombre_archivo.lower():
+            infraestructura = 'AZURE'
+        elif 'op_' in nombre_archivo.lower():
+            infraestructura = 'ON PREMISE'
+    return infraestructura
+
+def obtener_ambiente_inv(nombre_archivo):
+    infraestructura = ''
+    if isinstance(nombre_archivo, str):
+        if 'prod' in nombre_archivo.lower():
+            infraestructura = 'PROD'
+        if not 'prod' in nombre_archivo.lower():
+            infraestructura = 'ENP'
+    return infraestructura
+
+def obtener_location_inv(nombre_archivo):
+    infraestructura = ''
+
+    if isinstance(nombre_archivo, str):
+        if 'aws' in nombre_archivo.lower():
+            infraestructura = 'AWS'
+        elif 'azure' in nombre_archivo.lower():
+            infraestructura = 'AZURE'
+        else:
+            infraestructura = 'ON PREMISE'
+
+    return infraestructura
+
+def definir_host(texto, nombre_inventario):
+    if re.match(r'^\d{1,3}(\.\d{1,3}){3}$', texto):
+        return str(nombre_inventario).upper() if nombre_inventario else 'unknow'
+    else:
+        return texto.upper()
+
+def obtener_host(texto_host, entorno):
+    nombre_inventario = "sin_nombre"
+    # 1. Si es IP
+    if re.match(r'^\d{1,3}(\.\d{1,3}){3}$', str(texto_host)):
+        return str(nombre_inventario).upper() if nombre_inventario else 'UNKNOW'
+
+    # 2. Si NO es IP → convertir a string
+    host = str(texto_host).upper()
+
+    # Si es ON PREMISE → quitar dominio
+    if entorno == 'ON PREMISE':
+        match = re.search(r'^(.*?)\.', host)
+        if match:
+            return match.group(1).upper()
+        return host  # si no tiene dominio
+
+    # Si NO es ON PREMISE → devolver tal cual
+    return host
+
+anio_actual = obtener_anio()
+mes_actual = obtener_mes()
+fecha_actual = datetime.now().strftime("%m_%Y")
+nombre_archivo_cloud = f'Hardening_Unix_Cloud_{fecha_actual}_nd.xlsx'
+nombre_archivo_op = f'Hardening_Unix_OnPremise_{mes_actual}{anio_actual}_nd.xlsx'
+
+carpeta = os.path.join('C:/Users/naarella/OneDrive - Banco Pichincha C.A/SISTEMAS OPERATIVOS/UNIX/TENABLE/', anio_actual, mes_actual.upper(),'22-09-2026')
+
+ruta_resultado = os.path.join('C:/Users/naarella/OneDrive - Banco Pichincha C.A/SISTEMAS OPERATIVOS/UNIX/REPORTES/PRUEBA/2026',)
+
+archivo_resultado_op = crear_archivo_excel(os.path.join(ruta_resultado, nombre_archivo_op))
+archivo_resultado_cloud = crear_archivo_excel(os.path.join(ruta_resultado, nombre_archivo_cloud))
+
+#------------------------------- PROCESO CAMPOS INVENTRIO ---------------------------------------------------------
+
+# Ruta del inventario
+ruta_inventario = Path(
+    os.path.join(
+        r"C:\Users\naarella\OneDrive - Banco Pichincha C.A\SISTEMAS OPERATIVOS\UNIX\INVENTARIO BP",
+        anio_actual
+    )
+)
+
+fecha_inventario = datetime.now().strftime("%m-%Y")
+
+patron_inventario = re.compile(
+    rf"^Inventario servidores BP .+{fecha_inventario}$",
+    re.IGNORECASE
+)
+
+archivo_inventario = next(
+    (
+        archivo
+        for archivo in ruta_inventario.glob("*.xls*")
+        if patron_inventario.match(archivo.stem)
+    ),
+    None
+)
+
+if archivo_inventario is None:
+    raise FileNotFoundError(
+        f"No se encontró un archivo tipo 'Inventario servidores BP * {fecha_inventario}'"
+    )
+
+df_inventario = pd.read_excel(archivo_inventario)
+
+df_inventario.columns = df_inventario.columns.str.upper()
+
+for col in df_inventario.select_dtypes(include=["object", "string"]).columns:
+    df_inventario[col] = df_inventario[col].str.upper()
+
+print(f"Archivo encontrado: {archivo_inventario.name}")
+
+df_inventario = df_inventario.rename(
+    columns={
+        "ENVIRONMENT": "AMBIENTE",
+        "U CI BUSINESS CRITICALITY": "APLICACION"
+    }
+)
+
+df_inventario["AMBIENTE"] = df_inventario["AMBIENTE"].apply(obtener_ambiente_inv)
+df_inventario["LOCATION"] = df_inventario["LOCATION"].apply(obtener_location_inv)
+
+#------------------------------- PROCESO ARCHIVOS DE ESCANEO -----------------------------------------------------
+dfs = []
+columnas = ['Host','IP Address', 'Description', 'Plugin Output', 'Host Start', 'OS','FQDN']
+for root, dirs, files in os.walk(carpeta):
+    for archivo in files:
+        if archivo.endswith('.csv'):
+            ruta_archivo = os.path.join(root, archivo)
+            # Leer el archivo CSV, indicando explícitamente las columnas a utilizar y desactivando el manejo de tipos de datos mixtos
+            df = pd.read_csv(ruta_archivo, usecols=columnas, dtype=str)
+            # Seleccionar las columnas requeridas
+            df = df[['Host','IP Address', 'Description', 'Plugin Output', 'Host Start', 'OS','FQDN']]
+            df['ITEM'], df['SUBITEM'], df['CRITICIDAD'], df['CUMPLIMIENTO'], df['DETALLE'], df['VALOR ESPERADO'], df['VALOR ENCONTRADO'] = zip(*df['Description'].apply(procesar_descripcion))
+            df['Host Start'] = df['Host Start'].astype(str).str.strip().str.rstrip('y')
+            df['Host Start'] = pd.to_datetime(df['Host Start'], errors='coerce', utc=True)
+            df['Host Start'] = df['Host Start'].dt.tz_convert(None)
+            df['GRUPO SO'] = "UNIX"
+            df['SENSOR']=sensor(archivo)
+            df['ENTORNO'] = obtener_infraestructura(archivo)
+            dfs.append(df)
+            
+df_archivos = pd.concat(dfs, ignore_index=True)
+df_archivos.columns = df_archivos.columns.str.upper()
+df_archivos['OBSERVACION'] = df_archivos['DESCRIPTION'].apply(obtener_observacion)
+df_archivos['JUSTIFICACION'] = df_archivos['PLUGIN OUTPUT'].apply(obtener_justificacion)
+df_archivos['TIPO ESCANEO']=df_archivos.apply(lambda row: obtener_escaneo(row['ITEM'], row['JUSTIFICACION']), axis=1)
+df_archivos['SO'] = df_archivos.apply(lambda row: obtener_so(row['OS']) if row['TIPO ESCANEO'] == 'ESCANEADO' else '', axis=1)
+df_archivos['NOMBRE1'] = df_archivos.apply(
+    lambda row: obtener_host(row['HOST'],row['ENTORNO']),
+    axis=1
+)
+df_archivos['NOMBRE2'] = df_archivos.apply(
+    lambda row: obtener_host(row['FQDN'],row['ENTORNO']),
+    axis=1
+)
+
+#----------------------------- DEFINICION DE ESCANEADOS Y NO ESCANEADOS ------------------------------------------
+# Asegura consistencia: mayúsculas y categorías fijas (acelera el groupby)
+df_detalle = df_archivos.copy()
+df_detalle['CUMPLIMIENTO'] = pd.Categorical(
+    df_detalle['CUMPLIMIENTO'],
+    categories=['ERROR', 'FAILED', 'PASSED']
+)
+
+resumen = (
+    df_detalle
+    .groupby(['IP ADDRESS','CUMPLIMIENTO','HOST START'], observed=True)
+    .size()
+    .unstack('CUMPLIMIENTO', fill_value=0)  # columnas PASSED/FAILED/ERROR
+    .reindex(columns=['ERROR', 'FAILED', 'PASSED'], fill_value=0)  # garantiza orden/columnas
+    .reset_index()
+    .assign(**{
+        'TOTAL DE ITEMS': lambda d: d[['ERROR', 'FAILED', 'PASSED']].sum(axis=1)
+    })
+)
+
+resumen_ordenado = (
+    resumen
+    .sort_values(
+        by=['IP ADDRESS','TOTAL DE ITEMS','PASSED','HOST START'],
+        ascending=[True, False, False, False]
+    )
+    .reset_index(drop=True)
+)
+
+resumen_final = (
+    resumen_ordenado
+    .drop_duplicates(subset=['IP ADDRESS'], keep='first')
+    .reset_index(drop=True)
+)
+
+catalogo_general = df_archivos.copy()
+catalogo_general = catalogo_general[['IP ADDRESS']]
+catalogo_general = catalogo_general.drop_duplicates()
+
+pre_resumen_items = pd.merge(catalogo_general, resumen_final, on=['IP ADDRESS'], how='left')
+cols = ['ERROR', 'FAILED', 'PASSED']
+pre_resumen_items[cols] = ( pre_resumen_items[cols].replace(r'^\s*$', pd.NA, regex=True)
+    .fillna(0)                           
+)
+pre_resumen_items['TOTAL DE ITEMS'] = pre_resumen_items[cols].sum(axis=1)
+
+#----------------------------- RESUMEN ITEMS >0 ------------------------------------------
+
+catalogo_ip = df_archivos.copy()
+catalogo_ip = catalogo_ip[['NOMBRE1','NOMBRE2','IP ADDRESS', 'SO','GRUPO SO', 'ENTORNO', 'TIPO ESCANEO', 'SENSOR','HOST START']]
+catalogo_ip = catalogo_ip[
+    catalogo_ip['TIPO ESCANEO'].notna() 
+]
+catalogo_ip = catalogo_ip.drop_duplicates()
+
+items_no_cero = pre_resumen_items[pre_resumen_items['TOTAL DE ITEMS'] != 0]
+items_no_cero = items_no_cero.merge(catalogo_ip, on=['IP ADDRESS','HOST START'], how='left')
+
+#----------------------------- RESUMEN ITEMS 0 ------------------------------------------
+
+catalogo_ip_cero = df_archivos.copy()
+catalogo_ip_cero = catalogo_ip_cero[['NOMBRE1','NOMBRE2','IP ADDRESS', 'GRUPO SO', 'ENTORNO', 'TIPO ESCANEO','SENSOR','JUSTIFICACION']]
+catalogo_ip_cero = catalogo_ip_cero[
+    catalogo_ip_cero['TIPO ESCANEO'].notna() 
+]
+catalogo_ip_cero = catalogo_ip_cero.drop_duplicates()
+
+items_cero = pre_resumen_items[pre_resumen_items['TOTAL DE ITEMS'] == 0]
+items_cero = items_cero.merge(catalogo_ip_cero,on='IP ADDRESS',how='left')
+items_cero['TIPO ESCANEO'] = items_cero['TIPO ESCANEO'].fillna('NO ESCANEADO')
+items_cero['JUSTIFICACION'] = items_cero.apply(lambda row: 'Host no tiene privilegios suficientes' if row['TIPO ESCANEO'] == 'NO ESCANEADO' and not row['JUSTIFICACION'] else row['JUSTIFICACION'],axis=1)
+resumen_items = pd.concat([items_no_cero, items_cero], ignore_index=True)
+resumen_items['FECHA'] = pd.to_datetime(pd.Timestamp('today').normalize()).strftime('%d-%m-%Y')
+
+
+resumen_items['ITEMS ESTÁNDAR'] = ""
+resumen_items_final = resumen_items[['NOMBRE1','NOMBRE2','IP ADDRESS','GRUPO SO','ENTORNO',	'ERROR','FAILED','PASSED','TOTAL DE ITEMS','ITEMS ESTÁNDAR','FECHA','TIPO ESCANEO']]
+
+
+with pd.ExcelWriter(archivo_resultado_cloud, engine='openpyxl', mode='w') as writer:
+    df_archivos.to_excel(writer, sheet_name='Todo', index=False)
+    df_inventario.to_excel(writer, sheet_name='InventarioGeneral', index=False)
+    resumen_items_final.to_excel(writer, sheet_name='Resumen_Items', index=False)
+    pre_resumen_items.to_excel(writer, sheet_name='Pre_Resumen_Items', index=False)
+    resumen_items.to_excel(writer, sheet_name='all_Resumen_items', index=False)
+    df_resultado.to_excel(writer, sheet_name='Resultado', index=False)
