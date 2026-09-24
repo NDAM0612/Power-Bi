@@ -1,0 +1,323 @@
+import os
+import re
+import pandas as pd
+import numpy as np
+from datetime import datetime
+from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
+
+# ==========================================
+# 1. PATRONES REGEX COMPILADOS GLOBALMENTE
+# ==========================================
+
+PATRON_DESCRIPCION = re.compile(
+    r'([0-9.]+)(-([0-9.]+))?:?\s*(.*?):\s*\[(PASSED|FAILED|NULL|ERROR|WARNING)\][\s\S]*?(?:See Also:.*?\n)?(.*?\n)?[\s\S]*?Policy Value:\n(?:CONFIG _CHECK_NOT|CONFIG_CHECK|SHOW_CONFIG_CHECK)?\s*([\s\S]*?)\s*(?:Actual Value:|Error:)\s*([\s\S]*)',
+    re.DOTALL
+)
+
+PATRON_PRIVILEGIOS = re.compile(
+    r'this audit check is not running as root|'
+    r'ksh: fpm: cannot execute|'
+    r'file permission denied|'
+    r'could not execute command|'
+    r'must be privileged|'
+    r'insufficient privileges|'
+    r'attribute "account_locked" is not valid|'
+    r'attribute "sugroups" is not valid|'
+    r'cannot open /etc/issue|'
+    r'permission denied|'
+    r'sysctl: command not found',
+    re.IGNORECASE
+)
+
+PATRON_COMANDO_INCOMPATIBLE = re.compile(r'sh: sysctl: command not found|tcb systems', re.IGNORECASE)
+PATRON_LATENCIA = re.compile(r'command output has been interrupted|timeout obtaining lock|could not execute command', re.IGNORECASE)
+PATRON_POWERSHELL = re.compile(r'powershell command returned no result', re.IGNORECASE)
+PATRON_TIMEOUT = re.compile(r'command did not complete due to timeout or other error', re.IGNORECASE)
+
+PATRON_CREDENCIALES = re.compile(
+    r'failed to authenticate using the supplied password|'
+    r'nessus was unable to log into the following host|'
+    r'invalid credential',
+    re.IGNORECASE
+)
+PATRON_DEAD = re.compile(r'is considered as dead', re.IGNORECASE)
+PATRON_FIREWALL = re.compile(r'open_connection failed: no remote version received', re.IGNORECASE)
+PATRON_PASSWORD_EXPIRED = re.compile(r'your password has expired|your account has expired', re.IGNORECASE)
+PATRON_SSH_KEY = re.compile(r'failed to authenticate using publickey authentication|public key authentication failed', re.IGNORECASE)
+PATRON_ADMIN = re.compile(r'admin\$', re.IGNORECASE)
+
+PATRON_REDHAT = re.compile(r'.*?(RED HAT).+(\d+\.\d+).*', re.IGNORECASE)
+PATRON_AIX = re.compile(r'.*?(AIX 7)(\.\d+).*', re.IGNORECASE)
+PATRON_SOLARIS = re.compile(r'.*?(SOLARIS).+?([0-9]+).*', re.IGNORECASE)
+PATRON_UBUNTU = re.compile(r'.*?(UBUNTU).+?([0-9]+\.[0-9]+)', re.IGNORECASE)
+
+PATRON_IP = re.compile(r'^\d{1,3}(\.\d{1,3}){3}$')
+
+# ==========================================
+# 2. FUNCIONES AUXILIARES Y DE EXTRACCIÓN
+# ==========================================
+
+def obtener_anio():
+    return str(datetime.now().year)
+
+def obtener_mes():
+    meses = [
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ]
+    return meses[datetime.now().month - 1]
+
+def procesar_descripcion(descripcion):
+    if not isinstance(descripcion, str) or not descripcion:
+        return '', '', '', '', '', '', ''
+    
+    match = PATRON_DESCRIPCION.search(descripcion)
+    if match:
+        item = match.group(1).strip()
+        subitem = match.group(3).strip() if match.group(3) else ''
+        detalle = match.group(4).strip()
+        cumplimiento = match.group(5).strip()
+        valor_esperado = match.group(7).strip()
+        valor_hallado = match.group(8).strip() 
+        criticidad = match.group(6).strip() if match.group(6) else ''
+        return item, subitem, criticidad, cumplimiento, detalle, valor_esperado, valor_hallado
+        
+    return '', '', '', '', '', '', ''
+
+def obtener_observacion(description):
+    if not isinstance(description, str) or not description:
+        return ''
+    
+    if PATRON_PRIVILEGIOS.search(description):
+        return 'Privilegios insuficientes'
+    elif PATRON_COMANDO_INCOMPATIBLE.search(description):
+        return 'Comando incompatible'
+    elif PATRON_LATENCIA.search(description):
+        return 'Problemas de latencia'
+    elif PATRON_POWERSHELL.search(description):
+        return 'PowerShell deshabilitado'
+    elif PATRON_TIMEOUT.search(description):
+        return 'Timeout'
+    return ''
+
+def obtener_justificacion(output):
+    if not isinstance(output, str) or not output:
+        return ''
+    
+    if PATRON_CREDENCIALES.search(output):
+        return 'Credenciales inválidas'
+    elif PATRON_DEAD.search(output):
+        return 'Considerado muerto'
+    elif PATRON_FIREWALL.search(output):
+        return 'Bloqueo de firewall'
+    elif PATRON_PASSWORD_EXPIRED.search(output):
+        return 'Contraseña expirada'
+    elif PATRON_SSH_KEY.search(output):
+        return 'Error en llave SSH'
+    elif PATRON_ADMIN.search(output):
+        return 'No acceso a RC ADMIN$'
+    return ''
+
+def sensor(filename):
+    filename_lower = filename.lower()
+    pattern = re.compile(r'(?:[^_]*_){2}([^_]*)') if "op_" in filename_lower else re.compile(r'(?:[^_]*_){1}([^_]*)')
+    match = pattern.search(filename)
+    return match.group(1).strip() if match else ''
+
+def obtener_so(texto):
+    if not isinstance(texto, str):
+        return ''
+    m = PATRON_REDHAT.search(texto)
+    if m: return f'{m.group(1).upper()} {m.group(2)}'
+    m = PATRON_AIX.search(texto)
+    if m: return f'{m.group(1).upper()}{m.group(2)}'
+    m = PATRON_SOLARIS.search(texto)
+    if m: return f'{m.group(1).upper()} {m.group(2)}'
+    m = PATRON_UBUNTU.search(texto)
+    if m: return f'{m.group(1).upper()} {m.group(2)}'
+    return ''
+
+def obtener_infraestructura(nombre_archivo):
+    nombre_lower = str(nombre_archivo).lower()
+    if 'aws' in nombre_lower:
+        return 'AWS'
+    elif 'azure' in nombre_lower:
+        return 'AZURE'
+    elif 'op_' in nombre_lower:
+        return 'ON PREMISE'
+    return ''
+
+def obtener_ambiente_inv(nombre_archivo):
+    return 'PROD' if 'prod' in str(nombre_archivo).lower() else 'ENP'
+
+def obtener_location_inv(nombre_archivo):
+    nombre_lower = str(nombre_archivo).lower()
+    if 'aws' in nombre_lower: return 'AWS'
+    if 'azure' in nombre_lower: return 'AZURE'
+    return 'ON PREMISE'
+
+def obtener_host_vectorizado(series_host, series_entorno):
+    """Procesamiento vectorizado para extraer el nombre de host"""
+    host_str = series_host.astype(str).str.upper()
+    is_ip = host_str.str.contains(PATRON_IP, regex=True, na=False)
+    
+    is_on_premise = (series_entorno == 'ON PREMISE') & (~is_ip)
+    
+    res = host_str.copy()
+    res[is_ip] = 'UNKNOW'
+    res[is_on_premise] = host_str[is_on_premise].str.split('.').str[0]
+    return res
+
+# ==========================================
+# 3. PROCESAMIENTO PARALELO DE CSVs
+# ==========================================
+
+columnas = ['Host', 'IP Address', 'Description', 'Plugin Output', 'Host Start', 'OS', 'FQDN']
+
+def procesar_un_archivo_csv(ruta_archivo):
+    archivo = os.path.basename(ruta_archivo)
+    try:
+        df = pd.read_csv(ruta_archivo, usecols=columnas, dtype=str, engine='c')
+    except Exception as e:
+        print(f"Error al leer {archivo}: {e}")
+        return None
+
+    desc_results = list(map(procesar_descripcion, df['Description']))
+    if desc_results:
+        df['ITEM'], df['SUBITEM'], df['CRITICIDAD'], df['CUMPLIMIENTO'], df['DETALLE'], df['VALOR ESPERADO'], df['VALOR ENCONTRADO'] = zip(*desc_results)
+    else:
+        for col in ['ITEM', 'SUBITEM', 'CRITICIDAD', 'CUMPLIMIENTO', 'DETALLE', 'VALOR ESPERADO', 'VALOR ENCONTRADO']:
+            df[col] = ''
+
+    df['Host Start'] = df['Host Start'].astype(str).str.strip().str.rstrip('y')
+    df['Host Start'] = pd.to_datetime(df['Host Start'], errors='coerce', utc=True).dt.tz_localize(None)
+    df['GRUPO SO'] = "UNIX"
+    df['SENSOR'] = sensor(archivo)
+    df['ENTORNO'] = obtener_infraestructura(archivo)
+    return df
+
+# ==========================================
+# 4. EJECUCIÓN PRINCIPAL
+# ==========================================
+
+anio_actual = obtener_anio()
+mes_actual = obtener_mes()
+fecha_actual = datetime.now().strftime("%m_%Y")
+nombre_archivo_cloud = f'Hardening_Unix_Cloud_{fecha_actual}_nd.xlsx'
+nombre_archivo_op = f'Hardening_Unix_OnPremise_{mes_actual}{anio_actual}_nd.xlsx'
+
+carpeta = os.path.join('C:/Users/naarella/OneDrive - Banco Pichincha C.A/SISTEMAS OPERATIVOS/UNIX/TENABLE/', anio_actual, mes_actual.upper(), '22-09-2026')
+ruta_resultado = 'C:/Users/naarella/OneDrive - Banco Pichincha C.A/SISTEMAS OPERATIVOS/UNIX/REPORTES/PRUEBA/2026'
+
+os.makedirs(ruta_resultado, exist_ok=True)
+archivo_resultado_cloud = os.path.join(ruta_resultado, nombre_archivo_cloud)
+
+# --- PROCESO INVENTARIO ---
+ruta_inventario = Path(r"C:\Users\naarella\OneDrive - Banco Pichincha C.A\SISTEMAS OPERATIVOS\UNIX\INVENTARIO BP") / anio_actual
+fecha_inventario = datetime.now().strftime("%m-%Y")
+patron_inventario = re.compile(rf"^Inventario servidores BP .+{fecha_inventario}$", re.IGNORECASE)
+
+archivo_inventario = next(
+    (f for f in ruta_inventario.glob("*.xls*") if patron_inventario.match(f.stem)),
+    None
+)
+
+if archivo_inventario is None:
+    raise FileNotFoundError(f"No se encontró archivo de inventario para {fecha_inventario}")
+
+df_inventario = pd.read_excel(archivo_inventario)
+df_inventario.columns = df_inventario.columns.str.upper()
+
+for col in df_inventario.select_dtypes(include=["object", "string"]).columns:
+    df_inventario[col] = df_inventario[col].str.upper()
+
+df_inventario = df_inventario.rename(columns={"ENVIRONMENT": "AMBIENTE", "U CI BUSINESS CRITICALITY": "APLICACION"})
+df_inventario["AMBIENTE"] = df_inventario["AMBIENTE"].apply(obtener_ambiente_inv)
+df_inventario["LOCATION"] = df_inventario["LOCATION"].apply(obtener_location_inv)
+
+# --- CARGA PARALELA DE CSVs ---
+archivos_csv = [os.path.join(r, f) for r, d, files in os.walk(carpeta) for f in files if f.endswith('.csv')]
+
+with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+    resultados = executor.map(procesar_un_archivo_csv, archivos_csv)
+
+dfs = [df for df in resultados if df is not None]
+
+if not dfs:
+    raise ValueError("No se procesó ningún archivo CSV.")
+
+df_archivos = pd.concat(dfs, ignore_index=True)
+df_archivos.columns = df_archivos.columns.str.upper()
+
+# --- TRANSFORMACIONES VECTORIZADAS ---
+df_archivos['OBSERVACION'] = df_archivos['DESCRIPTION'].apply(obtener_observacion)
+df_archivos['JUSTIFICACION'] = df_archivos['PLUGIN OUTPUT'].apply(obtener_justificacion)
+
+# Vectorización de TIPO ESCANEO
+cond_escaneado = df_archivos['ITEM'] != ''
+cond_no_escaneado = (df_archivos['ITEM'] == '') & (df_archivos['JUSTIFICACION'] != '')
+df_archivos['TIPO ESCANEO'] = np.select([cond_escaneado, cond_no_escaneado], ['ESCANEADO', 'NO ESCANEADO'], default='')
+
+# Vectorización SO
+mask_escaneado = df_archivos['TIPO ESCANEO'] == 'ESCANEADO'
+df_archivos['SO'] = ''
+df_archivos.loc[mask_escaneado, 'SO'] = df_archivos.loc[mask_escaneado, 'OS'].apply(obtener_so)
+
+# Vectorización de NOMBRE1 y NOMBRE2
+df_archivos['NOMBRE1'] = obtener_host_vectorizado(df_archivos['HOST'], df_archivos['ENTORNO'])
+df_archivos['NOMBRE2'] = obtener_host_vectorizado(df_archivos['FQDN'], df_archivos['ENTORNO'])
+
+# --- RESUMEN Y AGRUPACIONES ---
+df_detalle = df_archivos.copy()
+df_detalle['CUMPLIMIENTO'] = pd.Categorical(df_detalle['CUMPLIMIENTO'], categories=['ERROR', 'FAILED', 'PASSED'])
+
+resumen = (
+    df_detalle
+    .groupby(['IP ADDRESS', 'CUMPLIMIENTO', 'HOST START'], observed=True)
+    .size()
+    .unstack('CUMPLIMIENTO', fill_value=0)
+    .reindex(columns=['ERROR', 'FAILED', 'PASSED'], fill_value=0)
+    .reset_index()
+    .assign(**{'TOTAL DE ITEMS': lambda d: d[['ERROR', 'FAILED', 'PASSED']].sum(axis=1)})
+)
+
+resumen_final = (
+    resumen
+    .sort_values(by=['IP ADDRESS', 'TOTAL DE ITEMS', 'PASSED', 'HOST START'], ascending=[True, False, False, False])
+    .drop_duplicates(subset=['IP ADDRESS'], keep='first')
+    .reset_index(drop=True)
+)
+
+catalogo_general = df_archivos[['IP ADDRESS']].drop_duplicates()
+pre_resumen_items = pd.merge(catalogo_general, resumen_final, on=['IP ADDRESS'], how='left')
+cols = ['ERROR', 'FAILED', 'PASSED']
+pre_resumen_items[cols] = pre_resumen_items[cols].fillna(0)
+pre_resumen_items['TOTAL DE ITEMS'] = pre_resumen_items[cols].sum(axis=1)
+
+# --- ITEMS > 0 Y ITEMS == 0 ---
+catalogo_ip = df_archivos[['NOMBRE1', 'NOMBRE2', 'IP ADDRESS', 'SO', 'GRUPO SO', 'ENTORNO', 'TIPO ESCANEO', 'SENSOR', 'HOST START']].dropna(subset=['TIPO ESCANEO']).drop_duplicates()
+items_no_cero = pre_resumen_items[pre_resumen_items['TOTAL DE ITEMS'] != 0].merge(catalogo_ip, on=['IP ADDRESS', 'HOST START'], how='left')
+
+catalogo_ip_cero = df_archivos[['NOMBRE1', 'NOMBRE2', 'IP ADDRESS', 'GRUPO SO', 'ENTORNO', 'TIPO ESCANEO', 'SENSOR', 'JUSTIFICACION']].dropna(subset=['TIPO ESCANEO']).drop_duplicates()
+items_cero = pre_resumen_items[pre_resumen_items['TOTAL DE ITEMS'] == 0].merge(catalogo_ip_cero, on='IP ADDRESS', how='left')
+
+items_cero['TIPO ESCANEO'] = items_cero['TIPO ESCANEO'].fillna('NO ESCANEADO')
+mask_justificacion = (items_cero['TIPO ESCANEO'] == 'NO ESCANEADO') & (items_cero['JUSTIFICACION'].isna() | (items_cero['JUSTIFICACION'] == ''))
+items_cero.loc[mask_justificacion, 'JUSTIFICACION'] = 'Host no tiene privilegios suficientes'
+
+resumen_items = pd.concat([items_no_cero, items_cero], ignore_index=True)
+resumen_items['FECHA'] = datetime.now().strftime('%d-%m-%Y')
+resumen_items['ITEMS ESTÁNDAR'] = ""
+
+resumen_items_final = resumen_items[['NOMBRE1', 'NOMBRE2', 'IP ADDRESS', 'GRUPO SO', 'ENTORNO', 'ERROR', 'FAILED', 'PASSED', 'TOTAL DE ITEMS', 'ITEMS ESTÁNDAR', 'FECHA', 'TIPO ESCANEO']]
+
+# --- ESCRITURA FINAL A EXCEL ---
+with pd.ExcelWriter(archivo_resultado_cloud, engine='openpyxl') as writer:
+    df_archivos.to_excel(writer, sheet_name='Todo', index=False)
+    df_inventario.to_excel(writer, sheet_name='InventarioGeneral', index=False)
+    resumen_items_final.to_excel(writer, sheet_name='Resumen_Items', index=False)
+    pre_resumen_items.to_excel(writer, sheet_name='Pre_Resumen_Items', index=False)
+    resumen_items.to_excel(writer, sheet_name='all_Resumen_items', index=False)
+
+print("Proceso completado con éxito.")
