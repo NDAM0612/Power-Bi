@@ -158,7 +158,6 @@ def obtener_location_inv(nombre_archivo):
     return 'ON PREMISE'
 
 def obtener_host_vectorizado(series_host, series_entorno):
-    """Procesamiento vectorizado para extraer el nombre de host"""
     host_str = series_host.astype(str).str.upper()
     is_ip = host_str.str.contains(PATRON_IP, regex=True, na=False)
     
@@ -205,7 +204,6 @@ anio_actual = obtener_anio()
 mes_actual = obtener_mes()
 fecha_actual = datetime.now().strftime("%m_%Y")
 nombre_archivo_cloud = f'Hardening_Unix_Cloud_{fecha_actual}_nd.xlsx'
-nombre_archivo_op = f'Hardening_Unix_OnPremise_{mes_actual}{anio_actual}_nd.xlsx'
 
 carpeta = os.path.join('C:/Users/naarella/OneDrive - Banco Pichincha C.A/SISTEMAS OPERATIVOS/UNIX/TENABLE/', anio_actual, mes_actual.upper(), '22-09-2026')
 ruta_resultado = 'C:/Users/naarella/OneDrive - Banco Pichincha C.A/SISTEMAS OPERATIVOS/UNIX/REPORTES/PRUEBA/2026'
@@ -312,12 +310,23 @@ resumen_items['ITEMS ESTÁNDAR'] = ""
 
 resumen_items_final = resumen_items[['NOMBRE1', 'NOMBRE2', 'IP ADDRESS', 'GRUPO SO', 'ENTORNO', 'ERROR', 'FAILED', 'PASSED', 'TOTAL DE ITEMS', 'ITEMS ESTÁNDAR', 'FECHA', 'TIPO ESCANEO']]
 
-# --- ESCRITURA FINAL A EXCEL ---
+# ==========================================
+# 5. EXPORTACIÓN DE RESULTADOS
+# ==========================================
+
+# 1. Exportar el Detalle Bruto (df_archivos) a CSV consolidado con UTF-8 BOM para soporte correcto en Excel
+nombre_csv_detalle = f'Hardening_Unix_Detalle_Bruto_{fecha_actual}.csv'
+ruta_csv_detalle = os.path.join(ruta_resultado, nombre_csv_detalle)
+
+df_archivos.to_csv(ruta_csv_detalle, index=False, encoding='utf-8-sig')
+
+# 2. Exportar solo resúmenes e inventario al archivo Excel (.xlsx)
 with pd.ExcelWriter(archivo_resultado_cloud, engine='openpyxl') as writer:
-    df_archivos.to_excel(writer, sheet_name='Todo', index=False)
     df_inventario.to_excel(writer, sheet_name='InventarioGeneral', index=False)
     resumen_items_final.to_excel(writer, sheet_name='Resumen_Items', index=False)
     pre_resumen_items.to_excel(writer, sheet_name='Pre_Resumen_Items', index=False)
     resumen_items.to_excel(writer, sheet_name='all_Resumen_items', index=False)
 
+print(f"Detalle bruto guardado en: {ruta_csv_detalle}")
+print(f"Resúmenes e inventario guardados en: {archivo_resultado_cloud}")
 print("Proceso completado con éxito.")
