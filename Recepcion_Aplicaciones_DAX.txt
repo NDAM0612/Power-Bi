@@ -1,0 +1,854 @@
+// Recepción de aplicaciones 2026 · Banco Pichincha · Medidas DAX para Power BI
+// Orden: 1) Medidas base  2) Textos dinámicos  3) HTML Content
+
+// ==================== 1. MEDIDAS BASE ====================
+
+// [0 Parámetros] Fecha de corte de la matriz. Formato: dd/mm/yyyy
+Fecha Corte =
+VAR x0 = CALCULATE ( MAX ( Parametros[Valor] ), Parametros[Parámetro] = "FechaCorte" )
+VAR x = DATE ( YEAR ( x0 ), MONTH ( x0 ), DAY ( x0 ) )
+RETURN x
+
+// [0 Parámetros] Fecha objetivo de la meta. Formato: dd/mm/yyyy
+Fecha Fin Anio =
+VAR x0 = CALCULATE ( MAX ( Parametros[Valor] ), Parametros[Parámetro] = "FinAnio" )
+VAR x = DATE ( YEAR ( x0 ), MONTH ( x0 ), DAY ( x0 ) )
+RETURN x
+
+// [0 Parámetros] Fecha del informe de conciliación (Word). Formato: dd/mm/yyyy
+Fecha Informe =
+VAR x0 = CALCULATE ( MAX ( Parametros[Valor] ), Parametros[Parámetro] = "FechaInforme" )
+VAR x = DATE ( YEAR ( x0 ), MONTH ( x0 ), DAY ( x0 ) )
+RETURN x
+
+// [0 Parámetros] Aplicaciones gobernadas objetivo a fin de año. Formato: 0
+Meta =
+CALCULATE ( MAX ( Parametros[Valor] ), Parametros[Parámetro] = "Meta" )
+
+// [0 Parámetros] Alcance de recepción antes de ampliar criterios. Formato: 0
+Alcance Inicial =
+CALCULATE ( MAX ( Parametros[Valor] ), Parametros[Parámetro] = "AlcanceInicial" )
+
+// [0 Parámetros] Alcance de recepción con los nuevos criterios. Formato: 0
+Alcance Actual =
+CALCULATE ( MAX ( Parametros[Valor] ), Parametros[Parámetro] = "AlcanceActual" )
+
+// [0 Parámetros] Gobernadas según el informe de conciliación. Formato: 0
+Gobernadas Informe =
+CALCULATE ( MAX ( Parametros[Valor] ), Parametros[Parámetro] = "GobernadasInforme" )
+
+// [0 Parámetros] Días promedio por mes. Formato: 0.0
+Dias Mes =
+CALCULATE ( MAX ( Parametros[Valor] ), Parametros[Parámetro] = "DiasMes" )
+
+// [1 Universo] Aplicaciones registradas en la CMDB. Formato: 0
+CMDB =
+CALCULATE ( SUM ( dConciliacion[Valor] ), dConciliacion[Tipo] = "Base" )
+
+// [1 Universo] Suma de ajustes de conciliación. Formato: 0
+Ajustes CMDB =
+CALCULATE ( SUM ( dConciliacion[Valor] ), dConciliacion[Tipo] = "Ajuste" )
+
+// [1 Universo] Universo conciliado de aplicaciones. Formato: 0
+Universo =
+[CMDB] + [Ajustes CMDB]
+
+// [1 Universo] Filas de la matriz, con duplicados. Formato: 0
+Filas Matriz =
+COUNTROWS ( fAplicaciones )
+
+// [1 Universo] Aplicaciones sin duplicados exactos (Nombre + Bp Id). Base de todos los conteos. Formato: 0
+Aplicaciones Unicas =
+CALCULATE ( COUNTROWS ( fAplicaciones ), fAplicaciones[Cuenta] = 1 )
+
+// [1 Universo] Filas repetidas en la matriz. Formato: 0
+Duplicados Exactos =
+[Filas Matriz] - [Aplicaciones Unicas]
+
+// [1 Universo] Aplicaciones del universo que no están en la matriz. Formato: 0
+Sin Fila en Matriz =
+MAX ( 0, [Universo] - [Aplicaciones Unicas] )
+
+// [2 Avance] Aplicaciones entregadas a Identidades. Formato: 0
+Gobernadas =
+CALCULATE ( [Aplicaciones Unicas], fAplicaciones[Gobernada] = 1 )
+
+// [2 Avance] Aplicaciones aún no recibidas. Formato: 0
+Pendientes =
+CALCULATE ( [Aplicaciones Unicas], fAplicaciones[Gobernada] = 0 )
+
+// [2 Avance] Avance sobre el universo conciliado. Formato: 0%
+% Gobernadas Universo =
+DIVIDE ( CALCULATE ( [Gobernadas], REMOVEFILTERS ( dEtapa ) ), [Universo] )
+
+// [2 Avance] Cobertura dentro de un segmento (criticidad, equipo, ubicación). Formato: 0%
+% Gobernadas Segmento =
+DIVIDE ( [Gobernadas], [Aplicaciones Unicas] )
+
+// [2 Avance]  Formato: 0%
+% Meta Universo =
+DIVIDE ( [Meta], [Universo] )
+
+// [2 Avance]  Formato: 0%
+% Meta Cumplida =
+DIVIDE ( [Gobernadas], [Meta] )
+
+// [2 Avance] Recepciones que faltan para la meta. Formato: 0
+Brecha Meta =
+MAX ( 0, [Meta] - [Gobernadas] )
+
+// [2 Avance]  Formato: 0
+Criterio 1 =
+CALCULATE ( [Aplicaciones Unicas], fAplicaciones[Etapa] = "Criterio 1" )
+
+// [2 Avance]  Formato: 0
+Criterio 2 =
+CALCULATE ( [Aplicaciones Unicas], fAplicaciones[Etapa] = "Criterio 2" )
+
+// [2 Avance]  Formato: 0
+Criterio 3 =
+CALCULATE ( [Aplicaciones Unicas], fAplicaciones[Etapa] = "Criterio 3" )
+
+// [2 Avance]  Formato: 0
+Planificadas 2027 =
+CALCULATE ( [Aplicaciones Unicas], fAplicaciones[Etapa] = "Planificada 2027" )
+
+// [2 Avance] Cartera priorizada para el año. Formato: 0
+Priorizadas 2026 =
+[Criterio 1] + [Criterio 2] + [Criterio 3]
+
+// [2 Avance] Gobernadas si se recibe todo el criterio 1. Formato: 0
+Con Criterio 1 =
+[Gobernadas] + [Criterio 1]
+
+// [2 Avance] Del criterio 2 necesarias para la meta. Formato: 0
+Necesarias Criterio 2 =
+MAX ( 0, [Meta] - [Gobernadas] - [Criterio 1] )
+
+// [3 Ritmo] Recepciones del año de corte. Formato: 0
+Recibidas Anio =
+VAR c = [Fecha Corte]
+RETURN
+CALCULATE ( [Gobernadas], REMOVEFILTERS ( dCalendario ),
+    fAplicaciones[Fecha Recepcion] >= DATE ( YEAR ( c ), 1, 1 ),
+    fAplicaciones[Fecha Recepcion] <= c )
+
+// [3 Ritmo]  Formato: 0.0
+Meses Transcurridos =
+VAR c = [Fecha Corte]
+RETURN DIVIDE ( c - DATE ( YEAR ( c ), 1, 1 ), [Dias Mes] )
+
+// [3 Ritmo] Recepciones por mes en el año. Formato: 0.0
+Ritmo Mensual =
+DIVIDE ( [Recibidas Anio], [Meses Transcurridos] )
+
+// [3 Ritmo]  Formato: 0.0
+Meses Restantes =
+DIVIDE ( [Fecha Fin Anio] - [Fecha Corte], [Dias Mes] )
+
+// [3 Ritmo] Recepciones por mes necesarias. Formato: 0.0
+Ritmo Requerido =
+DIVIDE ( [Brecha Meta], [Meses Restantes] )
+
+// [3 Ritmo]  Formato: 0.0
+Multiplicador Ritmo =
+DIVIDE ( [Ritmo Requerido], [Ritmo Mensual] )
+
+// [3 Ritmo] Gobernadas a fin de año al ritmo actual. Formato: 0
+Proyeccion Fin Anio =
+[Gobernadas] + [Ritmo Mensual] * [Meses Restantes]
+
+// [3 Ritmo]  Formato: 0%
+% Proyeccion Universo =
+DIVIDE ( [Proyeccion Fin Anio], [Universo] )
+
+// [3 Ritmo] Acumulado al final de cada periodo (para un gráfico de líneas con dCalendario[InicioMes]). Incluye las gobernadas sin fecha. Formato: 0
+Gobernadas Acumuladas =
+VAR c = [Fecha Corte]
+VAR f = MAX ( dCalendario[Fecha] )
+VAR lim = MIN ( f, c )
+RETURN
+IF ( MIN ( dCalendario[Fecha] ) > c, BLANK (),
+    CALCULATE ( [Gobernadas], REMOVEFILTERS ( dCalendario ),
+        FILTER ( ALL ( fAplicaciones[Fecha Recepcion] ),
+            fAplicaciones[Fecha Recepcion] <= lim || ISBLANK ( fAplicaciones[Fecha Recepcion] ) ) ) )
+
+// [4 Conciliación]  Formato: 0%
+% Informe sobre CMDB =
+DIVIDE ( [Gobernadas Informe], [CMDB] )
+
+// [4 Conciliación]  Formato: 0%
+% Informe sobre Universo =
+DIVIDE ( [Gobernadas Informe], [Universo] )
+
+// [4 Conciliación]  Formato: 0%
+% Gobernadas sobre CMDB =
+DIVIDE ( CALCULATE ( [Gobernadas], REMOVEFILTERS ( dEtapa ) ), [CMDB] )
+
+// [4 Conciliación] Puntos de más al reportar sobre la CMDB. Formato: 0
+Sobrestimacion Puntos =
+( [% Gobernadas sobre CMDB] - [% Gobernadas Universo] ) * 100
+
+// [4 Conciliación] Gobernadas con ID propio de Identidades (sin ficha CMDB). Formato: 0
+Gobernadas ID GI =
+CALCULATE ( [Gobernadas], fAplicaciones[IDPropioGI] = 1 )
+
+// [4 Conciliación]  Formato: 0%
+% Gobernadas ID GI =
+DIVIDE ( [Gobernadas ID GI], [Gobernadas] )
+
+// [4 Conciliación] Pendientes que ya figuran gobernadas con ID GI. Formato: 0
+Posibles Duplicados GI =
+CALCULATE ( [Aplicaciones Unicas], fAplicaciones[PosibleDuplicadoGI] = 1 )
+
+// [5 Criticidad] Criticidad A, B o C. Formato: 0
+Criticas =
+CALCULATE ( [Aplicaciones Unicas], dCriticidad[EsCritica] = 1 )
+
+// [5 Criticidad]  Formato: 0
+Criticas Gobernadas =
+CALCULATE ( [Gobernadas], dCriticidad[EsCritica] = 1 )
+
+// [5 Criticidad]  Formato: 0%
+% Criticas Gobernadas =
+DIVIDE ( [Criticas Gobernadas], [Criticas] )
+
+// [5 Criticidad] Críticas diferidas al año siguiente. Formato: 0
+Criticas 2027 =
+CALCULATE ( [Criticas], fAplicaciones[Etapa] = "Planificada 2027" )
+
+// [5 Criticidad]  Formato: 0
+Criticas A 2027 =
+CALCULATE ( [Aplicaciones Unicas], dCriticidad[Letra] = "A", fAplicaciones[Etapa] = "Planificada 2027" )
+
+// [5 Criticidad]  Formato: 0
+Criterio 1 Baja Criticidad =
+CALCULATE ( [Criterio 1], dCriticidad[Letra] IN { "D", "E" } )
+
+// [5 Criticidad]  Formato: 0
+Criterio 2 Criticas =
+CALCULATE ( [Criterio 2], dCriticidad[EsCritica] = 1 )
+
+// ==================== 2. TEXTOS DINÁMICOS ====================
+
+// Página Todas · Recuadro de corte · esperado: 17 sep 2026
+Texto Corte =
+VAR c = [Fecha Corte]
+RETURN DAY ( c ) & " " & LOOKUPVALUE ( dCalendario[MesCorto], dCalendario[Fecha], c ) & " " & YEAR ( c )
+
+// Página Todas · Pie de página · esperado: Fuentes: Matriz de Aplicaciones GI (última recepción registrada 17 sep 2026) y revisión CMDB vs. Gestión de Identidades al 11 de agosto.
+Texto Fuente =
+VAR c = [Fecha Corte]
+VAR i = [Fecha Informe]
+RETURN "Fuentes: Matriz de Aplicaciones GI (última recepción registrada " & DAY ( c ) & " " & LOOKUPVALUE ( dCalendario[MesCorto], dCalendario[Fecha], c ) & " " & YEAR ( c ) & ") y revisión CMDB vs. Gestión de Identidades al " & DAY ( i ) & " de " & LOOKUPVALUE ( dCalendario[MesLargo], dCalendario[Fecha], i ) & "."
+
+// Página 1 · KPI Universo · subtítulo · esperado: CMDB 331 + 86 ajustes
+Sub KPI Universo =
+"CMDB " & [CMDB] & " + " & [Ajustes CMDB] & " ajustes"
+
+// Página 1 · KPI Gobernadas · subtítulo · esperado: 45% del universo
+Sub KPI Gobernadas =
+FORMAT ( [% Gobernadas Universo], "0%" ) & " del universo"
+
+// Página 1 · KPI Gobernadas · chip · esperado: +42 en 2026
+Chip KPI Gobernadas =
+"+" & [Recibidas Anio] & " en " & YEAR ( [Fecha Corte] )
+
+// Página 1 · KPI Meta · etiqueta · esperado: Meta a diciembre 2026
+Label KPI Meta =
+"Meta a diciembre " & YEAR ( [Fecha Fin Anio] )
+
+// Página 1 · KPI Meta · subtítulo · esperado: 56% del universo
+Sub KPI Meta =
+FORMAT ( [% Meta Universo], "0%" ) & " del universo"
+
+// Página 1 · KPI Brecha · subtítulo · esperado: 81% de la meta cumplida
+Sub KPI Brecha =
+IF ( [Brecha Meta] = 0, "Meta alcanzada", FORMAT ( [% Meta Cumplida], "0%" ) & " de la meta cumplida" )
+
+// Página 1 · KPI Ritmo · subtítulo · esperado: Ritmo 2026: 4,9/mes (2,6× más)
+Sub KPI Ritmo =
+"Ritmo " & YEAR ( [Fecha Corte] ) & ": " & FORMAT ( [Ritmo Mensual], "0.0" ) & "/mes (" & FORMAT ( [Multiplicador Ritmo], "0.0" ) & "× más)"
+
+// Página 1 · Barra del universo · subtítulo · esperado: Las 417 aplicaciones del universo según su etapa en la matriz de Gestión de Identidades.
+Sub Barra Universo =
+"Las " & [Universo] & " aplicaciones del universo según su etapa en la matriz de Gestión de Identidades."
+
+// Página 1 · Barra del universo · marca meta · esperado: Meta dic-2026: 232 (56% del universo)
+Etiqueta Meta Barra =
+VAR f = [Fecha Fin Anio]
+RETURN "Meta " & LOOKUPVALUE ( dCalendario[MesCorto], dCalendario[Fecha], f ) & "-" & YEAR ( f ) & ": " & [Meta] & " (" & FORMAT ( [% Meta Universo], "0%" ) & " del universo)"
+
+// Página 1 · Barra del universo · marca informe · esperado: 11-ago: 176
+Etiqueta Informe =
+VAR i = [Fecha Informe]
+RETURN DAY ( i ) & "-" & LOOKUPVALUE ( dCalendario[MesCorto], dCalendario[Fecha], i ) & ": " & [Gobernadas Informe]
+
+// Página 1 · Ruta a la meta · subtítulo · esperado: Cuánto de la cartera priorizada hay que recibir para llegar a 232.
+Sub Ruta Meta =
+"Cuánto de la cartera priorizada hay que recibir para llegar a " & [Meta] & "."
+
+// Página 1 · Ruta a la meta · paso final · esperado: Meta, con 22 de las 27 del criterio 2
+Texto Ruta Paso Final =
+VAR g = [Gobernadas]
+VAR c1 = [Criterio 1]
+VAR c2 = [Criterio 2]
+VAR m = [Meta]
+RETURN
+    SWITCH ( TRUE (),
+        g >= m, "Meta ya alcanzada",
+        g + c1 >= m, "Meta, con " & ( m - g ) & " de las " & c1 & " del criterio 1",
+        g + c1 + c2 >= m, "Meta, con " & ( m - g - c1 ) & " de las " & c2 & " del criterio 2",
+        "Meta, con todo el criterio 2 y " & ( m - g - c1 - c2 ) & " del criterio 3" )
+
+// Página 1 · Ruta a la meta · nota · esperado: La cartera priorizada para 2026 suma 63 aplicaciones, más que las 44 que faltan. El problema no es de alcance sino de ritmo: al paso de 4,9 por mes se cerraría el año con ~205 (49%).
+Nota Ruta Meta =
+VAR pri = [Priorizadas 2026]
+VAR br = [Brecha Meta]
+RETURN
+    SWITCH ( TRUE (),
+        br = 0, "La meta del año ya está cumplida.",
+        pri < br, "La cartera priorizada (" & pri & ") no alcanza para cubrir las " & br & " que faltan: hay que priorizar más aplicaciones.",
+        [Multiplicador Ritmo] <= 1, "La cartera priorizada suma " & pri & " aplicaciones y el ritmo actual alcanza para llegar a la meta.",
+        "La cartera priorizada para " & YEAR ( [Fecha Corte] ) & " suma " & pri & " aplicaciones, más que las " & br
+            & " que faltan. El problema no es de alcance sino de ritmo: al paso de " & FORMAT ( [Ritmo Mensual], "0.0" )
+            & " por mes se cerraría el año con ~" & FORMAT ( [Proyeccion Fin Anio], "0" ) & " (" & FORMAT ( [% Proyeccion Universo], "0%" ) & ")." )
+
+// Página 1 · Curva · etiqueta proyección · esperado: al ritmo 2026: 205
+Etiqueta Proyeccion =
+"al ritmo " & YEAR ( [Fecha Corte] ) & ": " & FORMAT ( [Proyeccion Fin Anio], "0" )
+
+// Página 2 · Encabezado · subtítulo · esperado: Por qué la CMDB muestra 331 aplicaciones cuando Gestión de Identidades administra un universo de 417.
+Sub Encabezado P2 =
+"Por qué la CMDB muestra " & [CMDB] & " aplicaciones cuando Gestión de Identidades administra un universo de " & [Universo] & "."
+
+// Página 2 · Cascada · título · esperado: De 331 a 417 aplicaciones
+Titulo Cascada =
+"De " & [CMDB] & " a " & [Universo] & " aplicaciones"
+
+// Página 2 · Cascada · subtítulo · esperado: Ajustes identificados en la revisión de la CMDB frente al inventario de Gestión de Identidades (11 de agosto).
+Sub Cascada =
+VAR i = [Fecha Informe]
+RETURN "Ajustes identificados en la revisión de la CMDB frente al inventario de Gestión de Identidades (" & DAY ( i ) & " de " & LOOKUPVALUE ( dCalendario[MesLargo], dCalendario[Fecha], i ) & ")."
+
+// Página 2 · Doble base · etiqueta informe · esperado: Al 11 de agosto (176 gobernadas)
+Etiqueta Base Informe =
+VAR i = [Fecha Informe]
+RETURN "Al " & DAY ( i ) & " de " & LOOKUPVALUE ( dCalendario[MesLargo], dCalendario[Fecha], i ) & " (" & [Gobernadas Informe] & " gobernadas)"
+
+// Página 2 · Doble base · etiqueta corte · esperado: Al corte de la matriz (188 gobernadas)
+Etiqueta Base Corte =
+"Al corte de la matriz (" & [Gobernadas] & " gobernadas)"
+
+// Página 2 · Doble base · nota · esperado: Reportar sobre la CMDB sin conciliar sobrestima el avance en 12 puntos.
+Nota Doble Base =
+IF ( [Sobrestimacion Puntos] > 0.5, "Reportar sobre la CMDB sin conciliar sobrestima el avance en " & FORMAT ( [Sobrestimacion Puntos], "0" ) & " puntos.", "La base usada no cambia materialmente el avance." )
+
+// Página 2 · Matriz vs universo · nota · esperado: 41 aplicaciones gobernadas tienen un ID propio de Identidades (GI/GA) porque no existen en la CMDB: son el 22% de las gobernadas y no pueden pasar por los controles de depuración que dependen de la CMDB.
+Nota IDs GI =
+[Gobernadas ID GI] & " aplicaciones gobernadas tienen un ID propio de Identidades (GI/GA) porque no existen en la CMDB: son el " & FORMAT ( [% Gobernadas ID GI], "0%" ) & " de las gobernadas y no pueden pasar por los controles de depuración que dependen de la CMDB."
+
+// Página 2 · Alcance · título · esperado: De 232 a 395 aplicaciones a recibir.
+Titulo Alcance =
+"De " & [Alcance Inicial] & " a " & [Alcance Actual] & " aplicaciones a recibir."
+
+// Página 2 · Alcance · texto · esperado: Antes solo se recibían aplicaciones con módulo de seguridad propio (usuarios y roles). Además del inventario regularizado, el alcance creció en 163 aplicaciones por nuevos criterios de incorporación.
+Texto Alcance =
+"Antes solo se recibían aplicaciones con módulo de seguridad propio (usuarios y roles). Además del inventario regularizado, el alcance creció en " & ( [Alcance Actual] - [Alcance Inicial] ) & " aplicaciones por nuevos criterios de incorporación."
+
+// Página 3 · KPI críticas · subtítulo · esperado: 83 de 136 aplicaciones con criticidad A, B o C
+Sub KPI Criticas =
+[Criticas Gobernadas] & " de " & [Criticas] & " aplicaciones con criticidad A, B o C"
+
+// Página 3 · KPI críticas 2027 · subtítulo · esperado: 7 de ellas con apetito de riesgo de disponibilidad (A)
+Sub KPI Criticas 2027 =
+[Criticas A 2027] & " de ellas" & " con apetito de riesgo de disponibilidad (A)"
+
+// Página 3 · KPI criterio 1 · valor · esperado: 15 de 22
+Valor KPI C1 Baja =
+[Criterio 1 Baja Criticidad] & " de " & [Criterio 1]
+
+// Página 3 · KPI criterio 2 · valor · esperado: 25 de 27
+Valor KPI C2 Criticas =
+[Criterio 2 Criticas] & " de " & [Criterio 2]
+
+// Página 3 · KPI cobertura · subtítulo · esperado: 188 de 417 aplicaciones
+Sub KPI Cobertura =
+[Gobernadas] & " de " & [Universo] & " aplicaciones"
+
+// Página 3 · Nota de criticidad · esperado: El criterio 1 completa la meta con aplicaciones mayormente no críticas, mientras 25 de las 27 del criterio 2 son críticas y 21 críticas quedan para el próximo año. Si la meta busca reducir riesgo, conviene revisar el orden de los criterios. Pendientes A diferidas: BP-MOVIL, CXP (Banca Web), Deuna Personas V2, Identity BP, NeoCash, Pichincha Empresas, Switch NETManager CNB.
+Nota Criticidad =
+VAR c1 = [Criterio 1]
+VAR c1b = [Criterio 1 Baja Criticidad]
+VAR c2 = [Criterio 2]
+VAR c2c = [Criterio 2 Criticas]
+VAR c27 = [Criticas 2027]
+VAR listaA =
+    CONCATENATEX (
+        CALCULATETABLE ( VALUES ( fAplicaciones[Nombre] ), dCriticidad[Letra] = "A", fAplicaciones[Etapa] = "Planificada 2027", fAplicaciones[Cuenta] = 1 ),
+        fAplicaciones[Nombre], ", ", fAplicaciones[Nombre], ASC )
+VAR orden =
+    IF ( c1b > c1 / 2 && c2c > c2 / 2,
+        "El criterio 1 completa la meta con aplicaciones mayormente no críticas, mientras " & c2c & " de las " & c2
+            & " del criterio 2 son críticas y " & c27 & " críticas quedan para el próximo año. Si la meta busca reducir riesgo, conviene revisar el orden de los criterios.",
+        c27 & " aplicaciones críticas quedan para el próximo año." )
+RETURN orden & IF ( listaA <> "", " Pendientes A diferidas: " & listaA & ".", "" )
+
+// Página 4 · Encabezado · subtítulo · esperado: Las 63 aplicaciones priorizadas para 2026, ordenadas por criticidad. Se necesitan 44 recepciones para llegar a la meta.
+Sub Encabezado P4 =
+"Las " & [Priorizadas 2026] & " aplicaciones priorizadas para " & YEAR ( [Fecha Corte] ) & ", ordenadas por criticidad. Se necesitan " & [Brecha Meta] & " recepciones para llegar a la meta."
+
+// Página 4 · Tabla criterio 1 · etiqueta · esperado: Con todas: 210 gobernadas
+Pill Criterio 1 =
+"Con todas: " & [Con Criterio 1] & " gobernadas"
+
+// Página 4 · Tabla criterio 2 · etiqueta · esperado: Se necesitan 22 para la meta
+Pill Criterio 2 =
+IF ( [Necesarias Criterio 2] = 0, "No se necesitan para la meta", "Se necesitan " & MIN ( [Necesarias Criterio 2], [Criterio 2] ) & " para la meta" )
+
+// Página 4 · Nota criterio 3 · esperado: Criterio 3 · 14 aplicaciones, todas de criticidad E: Alarmnet, AutorizadorPichincha, CIS CAT Pro, DarkTrace, Enforcive Enterprise Security, Entra ID, Kriptos, Optimizador de Eventos SOC (ORXLog), Preguntas de Validación, Sistema de Gestión de Video DSS, Solución de Gestión de Certificados Digitales, Solución de Gestión de Incidentes de Ciberseguridad, Staffing , VECTR.
+Nota Criterio 3 =
+VAR t = CALCULATETABLE ( fAplicaciones, fAplicaciones[Etapa] = "Criterio 3", fAplicaciones[Cuenta] = 1 )
+VAR n = COUNTROWS ( t )
+VAR letras = COUNTROWS ( DISTINCT ( SELECTCOLUMNS ( t, "L", fAplicaciones[CritLetra] ) ) )
+VAR l1 = CONCATENATEX ( DISTINCT ( SELECTCOLUMNS ( t, "L", fAplicaciones[CritLetra] ) ), [L], ", " )
+VAR lista = CONCATENATEX ( t, fAplicaciones[Nombre], ", ", fAplicaciones[Nombre], ASC )
+RETURN
+    "Criterio 3 · " & n & " aplicaciones" & IF ( letras = 1, ", todas de criticidad " & l1, "" ) & ": " & lista & "."
+
+// Página 4 · Nota posibles duplicados · esperado: 4 posibles duplicados. Mail Control System (criterio 1), CapturadeFirmas (criterio 2), ListaObservados (criterio 2), Remesas (criterio 2) ya figuran como gobernadas con un ID de Identidades. Si son la misma aplicación, basta con conciliar el ID para darlas por recibidas, y la cartera real es menor.
+Nota Duplicados =
+VAR t = CALCULATETABLE ( fAplicaciones, fAplicaciones[PosibleDuplicadoGI] = 1, fAplicaciones[Cuenta] = 1 )
+VAR n = COUNTROWS ( t )
+VAR lista =
+    CONCATENATEX ( t, fAplicaciones[Nombre] & " (" & LOWER ( fAplicaciones[Etapa] ) & ")", ", ",
+        LOOKUPVALUE ( dEtapa[Orden], dEtapa[Etapa], fAplicaciones[Etapa] ), ASC, fAplicaciones[Nombre], ASC )
+RETURN
+    IF ( n = 0, "No se detectan aplicaciones pendientes que ya figuren gobernadas con ID de Identidades.",
+        n & IF ( n = 1, " posible duplicado. ", " posibles duplicados. " ) & lista
+            & IF ( n = 1, " ya figura", " ya figuran" ) & " como gobernadas con un ID de Identidades. Si son la misma aplicación, basta con conciliar el ID para darlas por recibidas, y la cartera real es menor." )
+
+// ==================== 3. HTML CONTENT ====================
+
+// Página 1 · Encabezado de página · tamaño 1600 × 92 px
+HTML Apps Encabezado P1 =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;position:relative;display:flex;align-items:center;height:92px;background:#FFFFFF;border-bottom:1px solid #E2E6EF;padding:0 30px 0 70px;box-sizing:border-box'>"
+    & "<div style='position:absolute;left:0;top:0;width:0;height:0;border-top:46px solid transparent;border-bottom:46px solid transparent;border-left:40px solid #FFDD00'></div>"
+    & "<div><div style='font-size:30px;font-weight:700;color:#0F265C;line-height:1.15'>" & "Recepción de aplicaciones " & YEAR ( [Fecha Corte] ) & "</div>"
+    & "<div style='font-size:14px;color:#6B7390;margin-top:4px'>" & "Cuántas aplicaciones del universo ya gobierna Gestión de Identidades y qué falta para llegar a la meta de fin de año." & "</div></div>"
+    & "<div style='margin-left:auto;display:flex;align-items:center;gap:20px'>"
+    & "<div style='text-align:right;font-size:12px;color:#6B7390;line-height:1.45'><b style='display:block;color:#0F265C;font-size:16px'>Banco Pichincha</b>Gestión de Identidades · Hito liderado por " & CALCULATE ( MAX ( Parametros[Texto] ), Parametros[Parámetro] = "ResponsableHito" ) & "</div>"
+    & "<div style='background:#0F265C;color:#FFFFFF;border-radius:12px;padding:9px 16px;font-size:11.5px;line-height:1.35'>Corte matriz<br><b style='font-size:15px;color:#FFDD00'>" & [Texto Corte] & "</b></div>"
+    & "</div></div>"
+
+// Página 2 · Encabezado de página · tamaño 1600 × 92 px
+HTML Apps Encabezado P2 =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;position:relative;display:flex;align-items:center;height:92px;background:#FFFFFF;border-bottom:1px solid #E2E6EF;padding:0 30px 0 70px;box-sizing:border-box'>"
+    & "<div style='position:absolute;left:0;top:0;width:0;height:0;border-top:46px solid transparent;border-bottom:46px solid transparent;border-left:40px solid #FFDD00'></div>"
+    & "<div><div style='font-size:30px;font-weight:700;color:#0F265C;line-height:1.15'>" & "Conciliación del universo de aplicaciones" & "</div>"
+    & "<div style='font-size:14px;color:#6B7390;margin-top:4px'>" & [Sub Encabezado P2] & "</div></div>"
+    & "<div style='margin-left:auto;display:flex;align-items:center;gap:20px'>"
+    & "<div style='text-align:right;font-size:12px;color:#6B7390;line-height:1.45'><b style='display:block;color:#0F265C;font-size:16px'>Banco Pichincha</b>Gestión de Identidades · Hito liderado por " & CALCULATE ( MAX ( Parametros[Texto] ), Parametros[Parámetro] = "ResponsableHito" ) & "</div>"
+    & "<div style='background:#0F265C;color:#FFFFFF;border-radius:12px;padding:9px 16px;font-size:11.5px;line-height:1.35'>Corte matriz<br><b style='font-size:15px;color:#FFDD00'>" & [Texto Corte] & "</b></div>"
+    & "</div></div>"
+
+// Página 3 · Encabezado de página · tamaño 1600 × 92 px
+HTML Apps Encabezado P3 =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;position:relative;display:flex;align-items:center;height:92px;background:#FFFFFF;border-bottom:1px solid #E2E6EF;padding:0 30px 0 70px;box-sizing:border-box'>"
+    & "<div style='position:absolute;left:0;top:0;width:0;height:0;border-top:46px solid transparent;border-bottom:46px solid transparent;border-left:40px solid #FFDD00'></div>"
+    & "<div><div style='font-size:30px;font-weight:700;color:#0F265C;line-height:1.15'>" & "Cobertura por criticidad y por equipo" & "</div>"
+    & "<div style='font-size:14px;color:#6B7390;margin-top:4px'>" & "Qué tan gobernadas están las aplicaciones más críticas y dónde se concentra lo pendiente." & "</div></div>"
+    & "<div style='margin-left:auto;display:flex;align-items:center;gap:20px'>"
+    & "<div style='text-align:right;font-size:12px;color:#6B7390;line-height:1.45'><b style='display:block;color:#0F265C;font-size:16px'>Banco Pichincha</b>Gestión de Identidades · Hito liderado por " & CALCULATE ( MAX ( Parametros[Texto] ), Parametros[Parámetro] = "ResponsableHito" ) & "</div>"
+    & "<div style='background:#0F265C;color:#FFFFFF;border-radius:12px;padding:9px 16px;font-size:11.5px;line-height:1.35'>Corte matriz<br><b style='font-size:15px;color:#FFDD00'>" & [Texto Corte] & "</b></div>"
+    & "</div></div>"
+
+// Página 4 · Encabezado de página · tamaño 1600 × 92 px
+HTML Apps Encabezado P4 =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;position:relative;display:flex;align-items:center;height:92px;background:#FFFFFF;border-bottom:1px solid #E2E6EF;padding:0 30px 0 70px;box-sizing:border-box'>"
+    & "<div style='position:absolute;left:0;top:0;width:0;height:0;border-top:46px solid transparent;border-bottom:46px solid transparent;border-left:40px solid #FFDD00'></div>"
+    & "<div><div style='font-size:30px;font-weight:700;color:#0F265C;line-height:1.15'>" & "Cartera priorizada para cerrar la brecha" & "</div>"
+    & "<div style='font-size:14px;color:#6B7390;margin-top:4px'>" & [Sub Encabezado P4] & "</div></div>"
+    & "<div style='margin-left:auto;display:flex;align-items:center;gap:20px'>"
+    & "<div style='text-align:right;font-size:12px;color:#6B7390;line-height:1.45'><b style='display:block;color:#0F265C;font-size:16px'>Banco Pichincha</b>Gestión de Identidades · Hito liderado por " & CALCULATE ( MAX ( Parametros[Texto] ), Parametros[Parámetro] = "ResponsableHito" ) & "</div>"
+    & "<div style='background:#0F265C;color:#FFFFFF;border-radius:12px;padding:9px 16px;font-size:11.5px;line-height:1.35'>Corte matriz<br><b style='font-size:15px;color:#FFDD00'>" & [Texto Corte] & "</b></div>"
+    & "</div></div>"
+
+// Página Todas · Pie de página · tamaño 1520 × 30 px
+HTML Apps Pie =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;font-size:10.5px;color:#6B7390'>" & [Texto Fuente] & "</div>"
+
+// Página 1 · Tarjeta KPI · tamaño 290 × 100 px
+HTML Apps KPI Universo =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-left:4px solid #0F265C;border-radius:14px;padding:12px 18px;box-sizing:border-box;height:100%'>"
+    & "<div style='font-size:30px;font-weight:700;color:#0F265C;line-height:1.1'>" & [Universo] & "</div>"
+    & "<div style='font-size:14px;font-weight:500;color:#1B2340;margin-top:3px'>" & "Universo de aplicaciones" & "</div>"
+    & "<div style='font-size:12px;color:#6B7390;margin-top:2px'>" & [Sub KPI Universo] & "</div></div>"
+
+// Página 1 · Tarjeta KPI · tamaño 290 × 100 px
+HTML Apps KPI Gobernadas =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-left:4px solid #0F265C;border-radius:14px;padding:12px 18px;box-sizing:border-box;height:100%'>"
+    & "<div style='font-size:30px;font-weight:700;color:#0F265C;line-height:1.1'>" & [Gobernadas] & " <span style='font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;background:#E4EAF7;color:#0F265C;vertical-align:middle'>" & [Chip KPI Gobernadas] & "</span>" & "</div>"
+    & "<div style='font-size:14px;font-weight:500;color:#1B2340;margin-top:3px'>" & "Aplicaciones gobernadas" & "</div>"
+    & "<div style='font-size:12px;color:#6B7390;margin-top:2px'>" & [Sub KPI Gobernadas] & "</div></div>"
+
+// Página 1 · Tarjeta KPI · tamaño 290 × 100 px
+HTML Apps KPI Meta =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-left:4px solid #0F265C;border-radius:14px;padding:12px 18px;box-sizing:border-box;height:100%'>"
+    & "<div style='font-size:30px;font-weight:700;color:#0F265C;line-height:1.1'>" & [Meta] & "</div>"
+    & "<div style='font-size:14px;font-weight:500;color:#1B2340;margin-top:3px'>" & [Label KPI Meta] & "</div>"
+    & "<div style='font-size:12px;color:#6B7390;margin-top:2px'>" & [Sub KPI Meta] & "</div></div>"
+
+// Página 1 · Tarjeta KPI · tamaño 290 × 100 px
+HTML Apps KPI Brecha =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-left:4px solid #F5B800;border-radius:14px;padding:12px 18px;box-sizing:border-box;height:100%'>"
+    & "<div style='font-size:30px;font-weight:700;color:#0F265C;line-height:1.1'>" & [Brecha Meta] & "</div>"
+    & "<div style='font-size:14px;font-weight:500;color:#1B2340;margin-top:3px'>" & "Faltan para la meta" & "</div>"
+    & "<div style='font-size:12px;color:#6B7390;margin-top:2px'>" & [Sub KPI Brecha] & "</div></div>"
+
+// Página 1 · Tarjeta KPI · tamaño 290 × 100 px
+HTML Apps KPI Ritmo =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-left:4px solid #D64545;border-radius:14px;padding:12px 18px;box-sizing:border-box;height:100%'>"
+    & "<div style='font-size:30px;font-weight:700;color:#0F265C;line-height:1.1'>" & FORMAT ( [Ritmo Requerido], "0.0" ) & "</div>"
+    & "<div style='font-size:14px;font-weight:500;color:#1B2340;margin-top:3px'>" & "Recepciones por mes necesarias" & "</div>"
+    & "<div style='font-size:12px;color:#6B7390;margin-top:2px'>" & [Sub KPI Ritmo] & "</div></div>"
+
+// Página 3 · Tarjeta KPI · tamaño 290 × 100 px
+HTML Apps KPI Criticas =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-left:4px solid #0F265C;border-radius:14px;padding:12px 18px;box-sizing:border-box;height:100%'>"
+    & "<div style='font-size:30px;font-weight:700;color:#0F265C;line-height:1.1'>" & FORMAT ( [% Criticas Gobernadas], "0%" ) & "</div>"
+    & "<div style='font-size:14px;font-weight:500;color:#1B2340;margin-top:3px'>" & "Críticas gobernadas (A, B y C)" & "</div>"
+    & "<div style='font-size:12px;color:#6B7390;margin-top:2px'>" & [Sub KPI Criticas] & "</div></div>"
+
+// Página 3 · Tarjeta KPI · tamaño 290 × 100 px
+HTML Apps KPI Criticas 2027 =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-left:4px solid #D64545;border-radius:14px;padding:12px 18px;box-sizing:border-box;height:100%'>"
+    & "<div style='font-size:30px;font-weight:700;color:#0F265C;line-height:1.1'>" & [Criticas 2027] + 0 & "</div>"
+    & "<div style='font-size:14px;font-weight:500;color:#1B2340;margin-top:3px'>" & "Críticas diferidas a " & ( YEAR ( [Fecha Corte] ) + 1 ) & "</div>"
+    & "<div style='font-size:12px;color:#6B7390;margin-top:2px'>" & [Sub KPI Criticas 2027] & "</div></div>"
+
+// Página 3 · Tarjeta KPI · tamaño 290 × 100 px
+HTML Apps KPI C1 Baja =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-left:4px solid #F5B800;border-radius:14px;padding:12px 18px;box-sizing:border-box;height:100%'>"
+    & "<div style='font-size:30px;font-weight:700;color:#0F265C;line-height:1.1'>" & [Valor KPI C1 Baja] & "</div>"
+    & "<div style='font-size:14px;font-weight:500;color:#1B2340;margin-top:3px'>" & "Criterio 1 de baja criticidad" & "</div>"
+    & "<div style='font-size:12px;color:#6B7390;margin-top:2px'>" & "Aplicaciones D o E en la primera prioridad" & "</div></div>"
+
+// Página 3 · Tarjeta KPI · tamaño 290 × 100 px
+HTML Apps KPI C2 Criticas =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-left:4px solid #F5B800;border-radius:14px;padding:12px 18px;box-sizing:border-box;height:100%'>"
+    & "<div style='font-size:30px;font-weight:700;color:#0F265C;line-height:1.1'>" & [Valor KPI C2 Criticas] & "</div>"
+    & "<div style='font-size:14px;font-weight:500;color:#1B2340;margin-top:3px'>" & "Criterio 2 críticas" & "</div>"
+    & "<div style='font-size:12px;color:#6B7390;margin-top:2px'>" & "Aplicaciones A, B o C en la segunda prioridad" & "</div></div>"
+
+// Página 3 · Tarjeta KPI · tamaño 290 × 100 px
+HTML Apps KPI Cobertura =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-left:4px solid #0F265C;border-radius:14px;padding:12px 18px;box-sizing:border-box;height:100%'>"
+    & "<div style='font-size:30px;font-weight:700;color:#0F265C;line-height:1.1'>" & FORMAT ( [% Gobernadas Universo], "0%" ) & "</div>"
+    & "<div style='font-size:14px;font-weight:500;color:#1B2340;margin-top:3px'>" & "Cobertura del universo" & "</div>"
+    & "<div style='font-size:12px;color:#6B7390;margin-top:2px'>" & [Sub KPI Cobertura] & "</div></div>"
+
+// Página 1 · Del universo a la meta (barra SVG) · tamaño 1520 × 270 px
+HTML Apps Barra Universo =
+VAR _W = 1440
+VAR _U = [Universo]
+VAR _by = 52
+VAR _bh = 46
+VAR _t0 = ADDCOLUMNS ( ALL ( dEtapa[Etapa], dEtapa[Orden], dEtapa[ColorHex], dEtapa[TextoColor], dEtapa[Leyenda] ), "@n", CALCULATE ( [Aplicaciones Unicas] ) + 0 )
+VAR _t = ADDCOLUMNS ( _t0, "@cum", VAR o = dEtapa[Orden] RETURN SUMX ( FILTER ( _t0, dEtapa[Orden] < o ), [@n] ) + 0 )
+VAR _nr = [Sin Fila en Matriz]
+VAR _un = [Aplicaciones Unicas]
+VAR _segs =
+    CONCATENATEX (
+        FILTER ( _t, [@n] > 0 ),
+        VAR x = _W * [@cum] / _U
+        VAR w = _W * [@n] / _U
+        RETURN
+            "<rect x='" & FORMAT ( x, "0.##", "en-US" ) & "' y='" & _by & "' width='" & FORMAT ( MAX ( w - 2, 1 ), "0.##", "en-US" ) & "' height='" & _bh & "' rx='6' fill='" & dEtapa[ColorHex] & "'/>"
+            & IF ( w > 34, "<text x='" & FORMAT ( x + w / 2, "0.##", "en-US" ) & "' y='" & _by + 29 & "' text-anchor='middle' style='font-size:12px;font-weight:600;fill:" & dEtapa[TextoColor] & "'>" & [@n] & "</text>", "" ),
+        "", dEtapa[Orden], ASC )
+VAR _nrSeg = IF ( _nr > 0, "<rect x='" & FORMAT ( _W * _un / _U, "0.##", "en-US" ) & "' y='" & _by & "' width='" & FORMAT ( MAX ( _W * _nr / _U - 2, 1 ), "0.##", "en-US" ) & "' height='" & _bh & "' rx='6' fill='#FFFFFF' stroke='#B4BBCB' stroke-dasharray='4 3'/>", "" )
+VAR _xI = _W * [Gobernadas Informe] / _U
+VAR _xG = _W * [Gobernadas] / _U
+VAR _xM = _W * [Meta] / _U
+VAR _marks =
+    "<line x1='" & FORMAT ( _xI, "0.##", "en-US" ) & "' x2='" & FORMAT ( _xI, "0.##", "en-US" ) & "' y1='" & _by - 14 & "' y2='" & _by + _bh & "' stroke='#6B7390' stroke-width='2'/>"
+    & "<text x='" & FORMAT ( _xI - 4, "0.##", "en-US" ) & "' y='" & _by - 20 & "' text-anchor='end' style='font-size:11.5px;font-weight:600;fill:#6B7390'>" & [Etiqueta Informe] & "</text>"
+    & "<line x1='" & FORMAT ( _xG, "0.##", "en-US" ) & "' x2='" & FORMAT ( _xG, "0.##", "en-US" ) & "' y1='" & _by - 14 & "' y2='" & _by + _bh & "' stroke='#0F265C' stroke-width='2'/>"
+    & "<text x='" & FORMAT ( _xG + 4, "0.##", "en-US" ) & "' y='" & _by - 20 & "' style='font-size:11.5px;font-weight:600;fill:#0F265C'>Hoy: " & [Gobernadas] & "</text>"
+    & "<line x1='" & FORMAT ( _xM, "0.##", "en-US" ) & "' x2='" & FORMAT ( _xM, "0.##", "en-US" ) & "' y1='" & _by & "' y2='" & _by + _bh + 16 & "' stroke='#D64545' stroke-width='2.5'/>"
+    & "<text x='" & FORMAT ( _xM + 6, "0.##", "en-US" ) & "' y='" & _by + _bh + 28 & "' style='font-size:11.5px;font-weight:600;fill:#D64545'>" & [Etiqueta Meta Barra] & "</text>"
+    & "<text x='" & _W & "' y='" & _by - 20 & "' text-anchor='end' style='font-size:11.5px;font-weight:600;fill:#0F265C'>Universo: " & _U & "</text>"
+VAR _leg =
+    CONCATENATEX ( _t, "<span style='margin-right:18px'><i style='display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;background:" & dEtapa[ColorHex] & "'></i>" & dEtapa[Leyenda] & " (" & [@n] & ")</span>", "", dEtapa[Orden], ASC )
+    & IF ( _nr > 0, "<span><i style='display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;border:1px dashed #B4BBCB'></i>Del universo sin fila en la matriz (" & _nr & ")</span>", "" )
+RETURN
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-radius:16px;padding:16px 20px;box-sizing:border-box;height:100%;color:#1B2340;'><div style='font-size:17px;font-weight:700;color:#0F265C;margin:0;'>" & "Del universo a la meta" & "</div>" & "<div style='font-size:12px;color:#6B7390;margin:2px 0 12px 0;'>" & [Sub Barra Universo] & "</div>"
+    & "<svg width='100%' viewBox='0 -4 " & _W & " 150'>" & _segs & _nrSeg & _marks & "</svg>" & "<div style='font-size:11.5px;color:#6B7390;margin-top:8px'>" & _leg & "</div>" & "</div>"
+
+// Página 1 · Aplicaciones gobernadas acumuladas (línea SVG) · tamaño 960 × 340 px
+HTML Apps Curva Acumulada =
+VAR _c = [Fecha Corte]
+VAR _y0 = YEAR ( _c ) - 1
+VAR _CW = 900
+VAR _CH = 215
+VAR _cl = 44
+VAR _cb = 28
+VAR _ct = 16
+VAR _gob = [Gobernadas]
+VAR _meta = [Meta]
+VAR _proj = [Proyeccion Fin Anio]
+VAR _m0 = FILTER ( SUMMARIZE ( ALL ( dCalendario ), dCalendario[InicioMes], dCalendario[MesCorto] ), YEAR ( dCalendario[InicioMes] ) >= _y0 && YEAR ( dCalendario[InicioMes] ) <= _y0 + 1 )
+VAR _m =
+    ADDCOLUMNS ( _m0,
+        "@i", ( YEAR ( dCalendario[InicioMes] ) - _y0 ) * 12 + MONTH ( dCalendario[InicioMes] ) - 1,
+        "@x", IF ( EOMONTH ( dCalendario[InicioMes], 0 ) <= _c,
+                ( YEAR ( dCalendario[InicioMes] ) - _y0 ) * 12 + MONTH ( dCalendario[InicioMes] ) - 1,
+                ( YEAR ( dCalendario[InicioMes] ) - _y0 ) * 12 + MONTH ( dCalendario[InicioMes] ) - 2 + DAY ( _c ) / DAY ( EOMONTH ( _c, 0 ) ) ),
+        "@v",
+            VAR lim = MIN ( EOMONTH ( dCalendario[InicioMes], 0 ), _c )
+            RETURN IF ( dCalendario[InicioMes] > _c, BLANK (),
+                CALCULATE ( [Gobernadas], REMOVEFILTERS ( dCalendario ), REMOVEFILTERS ( dEtapa ),
+                    FILTER ( ALL ( fAplicaciones[Fecha Recepcion] ), fAplicaciones[Fecha Recepcion] <= lim || ISBLANK ( fAplicaciones[Fecha Recepcion] ) ) ) ) )
+VAR _pts = FILTER ( _m, NOT ISBLANK ( [@v] ) )
+VAR _ymin = FLOOR ( MINX ( _pts, [@v] ) - 5, 50 )
+VAR _ymax = CEILING ( MAX ( _meta, MAXX ( _pts, [@v] ) ) + 10, 50 )
+VAR _sx = ( _CW - _cl - 20 ) / 23
+VAR _ky = ( _CH - _cb - _ct ) / ( _ymax - _ymin )
+VAR _poly = CONCATENATEX ( _pts, FORMAT ( _cl + [@x] * _sx, "0.#", "en-US" ) & "," & FORMAT ( _CH - _cb - ( [@v] - _ymin ) * _ky, "0.#", "en-US" ), " ", [@i], ASC )
+VAR _xc = _cl + MAXX ( _pts, [@x] ) * _sx
+VAR _xe = _cl + 23 * _sx
+VAR _yG = _CH - _cb - ( _gob - _ymin ) * _ky
+VAR _yM = _CH - _cb - ( _meta - _ymin ) * _ky
+VAR _yP = _CH - _cb - ( _proj - _ymin ) * _ky
+VAR _yB = _CH - _cb
+VAR _grid =
+    CONCATENATEX ( GENERATESERIES ( _ymin, _ymax, 50 ),
+        VAR yy = _CH - _cb - ( [Value] - _ymin ) * _ky
+        RETURN "<line x1='" & _cl & "' x2='" & _CW - 20 & "' y1='" & FORMAT ( yy, "0.#", "en-US" ) & "' y2='" & FORMAT ( yy, "0.#", "en-US" ) & "' stroke='#E2E6EF'/><text x='" & _cl - 8 & "' y='" & FORMAT ( yy + 4, "0.#", "en-US" ) & "' text-anchor='end' style='font-size:11px;fill:#6B7390'>" & [Value] & "</text>", "" )
+VAR _ax =
+    CONCATENATEX ( FILTER ( _m, MOD ( [@i], 3 ) = 0 ),
+        "<text x='" & FORMAT ( _cl + [@i] * _sx, "0.#", "en-US" ) & "' y='" & _CH - 10 & "' text-anchor='middle' style='font-size:12px;fill:#6B7390'>"
+            & UPPER ( LEFT ( dCalendario[MesCorto], 1 ) ) & MID ( dCalendario[MesCorto], 2, 2 ) & IF ( MONTH ( dCalendario[InicioMes] ) = 1, " " & RIGHT ( YEAR ( dCalendario[InicioMes] ), 2 ), "" ) & "</text>", "", [@i], ASC )
+VAR _svg =
+    "<svg width='100%' viewBox='0 0 " & _CW & " " & _CH & "'>" & _grid & _ax
+    & "<polygon points='" & FORMAT ( _cl + MINX ( _pts, [@x] ) * _sx, "0.#", "en-US" ) & "," & _yB & " " & _poly & " " & FORMAT ( _xc, "0.#", "en-US" ) & "," & _yB & "' fill='#C9D5EE' opacity='0.45'/>"
+    & "<polyline points='" & _poly & "' fill='none' stroke='#0F265C' stroke-width='3'/>"
+    & "<line x1='" & _cl & "' x2='" & FORMAT ( _xe, "0.#", "en-US" ) & "' y1='" & FORMAT ( _yM, "0.#", "en-US" ) & "' y2='" & FORMAT ( _yM, "0.#", "en-US" ) & "' stroke='#FFDD00' stroke-width='3'/>"
+    & "<text x='" & _cl + 4 & "' y='" & FORMAT ( _yM - 8, "0.#", "en-US" ) & "' style='font-size:11.5px;font-weight:600;fill:#0F265C'>Meta " & _meta & "</text>"
+    & "<line x1='" & FORMAT ( _xc, "0.#", "en-US" ) & "' x2='" & FORMAT ( _xe, "0.#", "en-US" ) & "' y1='" & FORMAT ( _yG, "0.#", "en-US" ) & "' y2='" & FORMAT ( _yM, "0.#", "en-US" ) & "' stroke='#D64545' stroke-width='2' stroke-dasharray='6 4'/>"
+    & "<line x1='" & FORMAT ( _xc, "0.#", "en-US" ) & "' x2='" & FORMAT ( _xe, "0.#", "en-US" ) & "' y1='" & FORMAT ( _yG, "0.#", "en-US" ) & "' y2='" & FORMAT ( _yP, "0.#", "en-US" ) & "' stroke='#3A5BA9' stroke-width='2' stroke-dasharray='3 4'/>"
+    & "<circle cx='" & FORMAT ( _xc, "0.#", "en-US" ) & "' cy='" & FORMAT ( _yG, "0.#", "en-US" ) & "' r='6' fill='#0F265C'/>"
+    & "<text x='" & FORMAT ( _xc - 8, "0.#", "en-US" ) & "' y='" & FORMAT ( _yG - 12, "0.#", "en-US" ) & "' text-anchor='end' style='font-size:11.5px;font-weight:600;fill:#0F265C'>" & _gob & " hoy</text>"
+    & "<circle cx='" & FORMAT ( _xe, "0.#", "en-US" ) & "' cy='" & FORMAT ( _yP, "0.#", "en-US" ) & "' r='5' fill='#3A5BA9'/>"
+    & "<text x='" & FORMAT ( _xe, "0.#", "en-US" ) & "' y='" & FORMAT ( _yP + 30, "0.#", "en-US" ) & "' text-anchor='end' style='font-size:11.5px;font-weight:600;fill:#3A5BA9'>" & [Etiqueta Proyeccion] & "</text>"
+    & "</svg>"
+RETURN
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-radius:16px;padding:16px 20px;box-sizing:border-box;height:100%;color:#1B2340;'><div style='font-size:17px;font-weight:700;color:#0F265C;margin:0;'>" & "Aplicaciones gobernadas acumuladas" & "</div>" & "<div style='font-size:12px;color:#6B7390;margin:2px 0 12px 0;'>" & "Según la fecha de recepción de la matriz. Línea roja: ritmo necesario para la meta. Línea azul: proyección al ritmo del año." & "</div>"
+    & _svg & "</div>"
+
+// Página 1 · Ruta a la meta (pasos + nota) · tamaño 520 × 340 px
+HTML Apps Ruta Meta =
+VAR _b = "<b style='display:block;font-size:34px;font-weight:700;color:#0F265C;line-height:1.1'>"
+VAR _s = "<span style='font-size:12px;color:#6B7390;line-height:1.35;display:block;margin-top:4px'>"
+VAR _arr = "<div style='font-size:15px;font-weight:700;color:#3A5BA9;white-space:nowrap'>+"
+VAR _p2 = MIN ( [Necesarias Criterio 2], [Criterio 2] )
+RETURN
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-radius:16px;padding:16px 20px;box-sizing:border-box;height:100%;color:#1B2340;'><div style='font-size:17px;font-weight:700;color:#0F265C;margin:0;'>" & "Ruta a la meta" & "</div>" & "<div style='font-size:12px;color:#6B7390;margin:2px 0 12px 0;'>" & [Sub Ruta Meta] & "</div>"
+    & "<div style='display:flex;align-items:center;gap:10px;margin:18px 0 8px'>"
+    & "<div style='flex:1;background:#F3F5FA;border-radius:14px;padding:16px 12px;text-align:center'>" & _b & [Gobernadas] & "</b>" & _s & "Gobernadas hoy</span></div>"
+    & _arr & [Criterio 1] & "</div>"
+    & "<div style='flex:1;background:#F3F5FA;border-radius:14px;padding:16px 12px;text-align:center'>" & _b & [Con Criterio 1] & "</b>" & _s & "Con todo el criterio 1</span></div>"
+    & _arr & _p2 & "</div>"
+    & "<div style='flex:1;background:#0F265C;border-radius:14px;padding:16px 12px;text-align:center'><b style='display:block;font-size:34px;font-weight:700;color:#FFDD00;line-height:1.1'>" & [Meta] & "</b><span style='font-size:12px;color:#DCE3F4;line-height:1.35;display:block;margin-top:4px'>" & [Texto Ruta Paso Final] & "</span></div></div>"
+    & "<div style='margin-top:14px;background:#F3F5FA;border-left:3px solid #FFDD00;border-radius:0 10px 10px 0;padding:11px 14px;font-size:12.5px;line-height:1.5'>" & [Nota Ruta Meta] & "</div>" & "</div>"
+
+// Página 2 · De CMDB a universo (cascada SVG + ajustes) · tamaño 940 × 610 px
+HTML Apps Cascada =
+VAR _WW = 900
+VAR _WH = 330
+VAR _wl = 40
+VAR _wb = 60
+VAR _top = 30
+VAR _t0 = ALL ( dConciliacion )
+VAR _n = COUNTROWS ( _t0 )
+VAR _mx = CEILING ( MAXX ( _t0, dConciliacion[Valor] ) * 1.08, 50 )
+VAR _k = ( _WH - _wb - _top ) / _mx
+VAR _stp = ( _WW - _wl - 20 ) / _n
+VAR _bw = _stp * 0.62
+VAR _t =
+    ADDCOLUMNS ( _t0,
+        "@y0", VAR o = dConciliacion[Orden] RETURN IF ( dConciliacion[Tipo] = "Ajuste", SUMX ( FILTER ( _t0, dConciliacion[Orden] < o && dConciliacion[Tipo] <> "Total" ), dConciliacion[Valor] ), 0 ),
+        "@i", dConciliacion[Orden] - 1 )
+VAR _grid =
+    CONCATENATEX ( GENERATESERIES ( 0, _mx, 100 ),
+        VAR yy = _WH - _wb - [Value] * _k
+        RETURN "<line x1='" & _wl & "' x2='" & _WW - 10 & "' y1='" & FORMAT ( yy, "0.#", "en-US" ) & "' y2='" & FORMAT ( yy, "0.#", "en-US" ) & "' stroke='#E2E6EF'/><text x='" & _wl - 8 & "' y='" & FORMAT ( yy + 4, "0.#", "en-US" ) & "' text-anchor='end' style='font-size:11px;fill:#6B7390'>" & [Value] & "</text>", "" )
+VAR _bars =
+    CONCATENATEX ( _t,
+        VAR x0 = _wl + [@i] * _stp + ( _stp - _bw ) / 2
+        VAR y1 = [@y0] + dConciliacion[Valor]
+        VAR yt = _WH - _wb - y1 * _k
+        VAR col = SWITCH ( dConciliacion[Tipo], "Base", "#B4BBCB", "Ajuste", "#FFDD00", "#0F265C" )
+        RETURN
+            "<rect x='" & FORMAT ( x0, "0.#", "en-US" ) & "' y='" & FORMAT ( yt, "0.#", "en-US" ) & "' width='" & FORMAT ( _bw, "0.#", "en-US" ) & "' height='" & FORMAT ( dConciliacion[Valor] * _k, "0.#", "en-US" ) & "' rx='5' fill='" & col & "'/>"
+            & "<text x='" & FORMAT ( x0 + _bw / 2, "0.#", "en-US" ) & "' y='" & FORMAT ( yt - 8, "0.#", "en-US" ) & "' text-anchor='middle' style='font-size:14px;font-weight:600;fill:#1B2340'>" & IF ( dConciliacion[Tipo] = "Ajuste", "+", "" ) & dConciliacion[Valor] & "</text>"
+            & IF ( [@i] < _n - 1, "<line x1='" & FORMAT ( x0 + _bw, "0.#", "en-US" ) & "' x2='" & FORMAT ( x0 + _stp, "0.#", "en-US" ) & "' y1='" & FORMAT ( yt, "0.#", "en-US" ) & "' y2='" & FORMAT ( yt, "0.#", "en-US" ) & "' stroke='#6B7390' stroke-dasharray='3 3'/>", "" )
+            & "<text x='" & FORMAT ( x0 + _bw / 2, "0.#", "en-US" ) & "' y='" & _WH - _wb + 20 & "' text-anchor='middle' style='font-size:12px;fill:#1B2340'>" & SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( dConciliacion[EtiquetaL1], "&", "&amp;" ), "<", "&lt;" ), ">", "&gt;" ) & "</text>"
+            & "<text x='" & FORMAT ( x0 + _bw / 2, "0.#", "en-US" ) & "' y='" & _WH - _wb + 36 & "' text-anchor='middle' style='font-size:12px;fill:#1B2340'>" & SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( dConciliacion[EtiquetaL2], "&", "&amp;" ), "<", "&lt;" ), ">", "&gt;" ) & "</text>",
+        "", dConciliacion[Orden], ASC )
+VAR _adj =
+    CONCATENATEX ( FILTER ( _t0, dConciliacion[Tipo] = "Ajuste" ),
+        "<div style='display:flex;gap:12px;padding:8px 0;border-top:1px solid #F3F5FA'><b style='font-size:22px;font-weight:700;color:#0F265C;min-width:48px'>+" & dConciliacion[Valor] & "</b>"
+            & "<div><div style='font-size:13px;font-weight:600'>" & SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( dConciliacion[Paso], "&", "&amp;" ), "<", "&lt;" ), ">", "&gt;" ) & "</div><div style='font-size:11.5px;color:#6B7390;line-height:1.45'>" & SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( dConciliacion[Descripcion], "&", "&amp;" ), "<", "&lt;" ), ">", "&gt;" ) & "</div></div></div>",
+        "", dConciliacion[Orden], ASC )
+RETURN
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-radius:16px;padding:16px 20px;box-sizing:border-box;height:100%;color:#1B2340;'><div style='font-size:17px;font-weight:700;color:#0F265C;margin:0;'>" & [Titulo Cascada] & "</div>" & "<div style='font-size:12px;color:#6B7390;margin:2px 0 12px 0;'>" & [Sub Cascada] & "</div>"
+    & "<svg width='100%' viewBox='0 0 " & _WW & " " & _WH & "'>" & _grid & _bars & "</svg>" & "<div style='display:grid;grid-template-columns:1fr 1fr;gap:6px 22px;margin-top:8px'>" & _adj & "</div>" & "</div>"
+
+// Página 2 · El mismo avance se lee distinto (barras) · tamaño 560 × 300 px
+HTML Apps Doble Base =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-radius:16px;padding:16px 20px;box-sizing:border-box;height:100%;color:#1B2340;'><div style='font-size:17px;font-weight:700;color:#0F265C;margin:0;'>" & "El mismo avance se lee distinto" & "</div>" & "<div style='font-size:12px;color:#6B7390;margin:2px 0 12px 0;'>" & "Porcentaje gobernado según el universo que se use como base." & "</div>"
+    & "<div style='font-size:12.5px;font-weight:600;color:#0F265C;margin:6px 0 4px'>" & [Etiqueta Base Informe] & "</div>"
+    & "<div style='display:flex;align-items:center;gap:12px;font-size:12.5px;padding:4px 0'><span style='width:170px'>Sobre CMDB (" & [CMDB] & ")</span><div style='flex:1;height:14px;background:#F3F5FA;border-radius:99px'><div style='height:14px;border-radius:99px;width:" & FORMAT ( [% Informe sobre CMDB] * 100, "0.##", "en-US" ) & "%;background:#B4BBCB'></div></div><b style='width:46px;text-align:right;font-size:15px;color:#0F265C'>" & FORMAT ( [% Informe sobre CMDB], "0%" ) & "</b></div>"
+    & "<div style='display:flex;align-items:center;gap:12px;font-size:12.5px;padding:4px 0'><span style='width:170px'>Sobre universo GI (" & [Universo] & ")</span><div style='flex:1;height:14px;background:#F3F5FA;border-radius:99px'><div style='height:14px;border-radius:99px;width:" & FORMAT ( [% Informe sobre Universo] * 100, "0.##", "en-US" ) & "%;background:#0F265C'></div></div><b style='width:46px;text-align:right;font-size:15px;color:#0F265C'>" & FORMAT ( [% Informe sobre Universo], "0%" ) & "</b></div>"
+    & "<div style='font-size:12.5px;font-weight:600;color:#0F265C;margin:6px 0 4px'>" & [Etiqueta Base Corte] & "</div>"
+    & "<div style='display:flex;align-items:center;gap:12px;font-size:12.5px;padding:4px 0'><span style='width:170px'>Sobre CMDB (" & [CMDB] & ")</span><div style='flex:1;height:14px;background:#F3F5FA;border-radius:99px'><div style='height:14px;border-radius:99px;width:" & FORMAT ( [% Gobernadas sobre CMDB] * 100, "0.##", "en-US" ) & "%;background:#B4BBCB'></div></div><b style='width:46px;text-align:right;font-size:15px;color:#0F265C'>" & FORMAT ( [% Gobernadas sobre CMDB], "0%" ) & "</b></div>"
+    & "<div style='display:flex;align-items:center;gap:12px;font-size:12.5px;padding:4px 0'><span style='width:170px'>Sobre universo GI (" & [Universo] & ")</span><div style='flex:1;height:14px;background:#F3F5FA;border-radius:99px'><div style='height:14px;border-radius:99px;width:" & FORMAT ( [% Gobernadas Universo] * 100, "0.##", "en-US" ) & "%;background:#0F265C'></div></div><b style='width:46px;text-align:right;font-size:15px;color:#0F265C'>" & FORMAT ( [% Gobernadas Universo], "0%" ) & "</b></div>"
+    & "<div style='margin-top:12px;background:#F3F5FA;border-left:3px solid #FFDD00;border-radius:0 10px 10px 0;padding:10px 14px;font-size:12.5px'>" & [Nota Doble Base] & "</div>" & "</div>"
+
+// Página 2 · La matriz frente al universo (cifras + nota) · tamaño 560 × 290 px
+HTML Apps Matriz Universo =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-radius:16px;padding:16px 20px;box-sizing:border-box;height:100%;color:#1B2340;'><div style='font-size:17px;font-weight:700;color:#0F265C;margin:0;'>" & "La matriz frente al universo" & "</div>" & "<div style='font-size:12px;color:#6B7390;margin:2px 0 12px 0;'>" & "Qué tan completo está el inventario de Identidades." & "</div>"
+    & "<div style='display:grid;grid-template-columns:repeat(4,1fr);gap:8px'>"
+    & "<div style='background:#F3F5FA;border-radius:12px;padding:10px 12px'><b style='display:block;font-size:24px;font-weight:700;color:#0F265C'>" & [Filas Matriz] & "</b><span style='font-size:11.5px;color:#6B7390;line-height:1.3;display:block'>filas en la matriz</span></div>"
+    & "<div style='background:#F3F5FA;border-radius:12px;padding:10px 12px'><b style='display:block;font-size:24px;font-weight:700;color:#0F265C'>−" & [Duplicados Exactos] & "</b><span style='font-size:11.5px;color:#6B7390;line-height:1.3;display:block'>filas duplicadas</span></div>"
+    & "<div style='background:#F3F5FA;border-radius:12px;padding:10px 12px'><b style='display:block;font-size:24px;font-weight:700;color:#0F265C'>" & [Aplicaciones Unicas] & "</b><span style='font-size:11.5px;color:#6B7390;line-height:1.3;display:block'>aplicaciones únicas</span></div>"
+    & "<div style='background:#FFF3C2;border-radius:12px;padding:10px 12px'><b style='display:block;font-size:24px;font-weight:700;color:#0F265C'>" & [Sin Fila en Matriz] & "</b><span style='font-size:11.5px;color:#6B7390;line-height:1.3;display:block'>del universo sin fila en la matriz</span></div></div>"
+    & "<div style='margin-top:12px;background:#F3F5FA;border-left:3px solid #FFDD00;border-radius:0 10px 10px 0;padding:10px 14px;font-size:12.5px;line-height:1.5'>" & [Nota IDs GI] & "</div>" & "</div>"
+
+// Página 2 · Por qué creció el alcance (bloque de lectura) · tamaño 1520 × 124 px
+HTML Apps Alcance =
+VAR _p = "<div style='flex:1;font-size:12.5px;line-height:1.5;color:#DCE3F4'><b style='display:block;color:#FFFFFF;font-weight:600;font-size:13.5px;margin-bottom:3px'>"
+VAR _crit = CONCATENATEX ( dAlcance, _p & SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( dAlcance[Titulo], "&", "&amp;" ), "<", "&lt;" ), ">", "&gt;" ) & "</b>" & SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( dAlcance[Texto], "&", "&amp;" ), "<", "&lt;" ), ">", "&gt;" ) & "</div>", "", dAlcance[Orden], ASC )
+RETURN
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#0F265C;border-radius:16px;padding:14px 24px;display:flex;gap:26px;align-items:flex-start;box-sizing:border-box;height:100%'>"
+    & "<div style='font-size:17px;font-weight:700;color:#FFDD00;width:150px;flex:none;line-height:1.25'>Por qué creció el alcance</div>"
+    & _p & [Titulo Alcance] & "</b>" & [Texto Alcance] & "</div>" & _crit & "</div>"
+
+// Página 3 · Etapa de recepción por criticidad (barras apiladas + nota) · tamaño 880 × 610 px
+HTML Apps Criticidad Etapas =
+VAR _rows =
+    CONCATENATEX (
+        FILTER ( ADDCOLUMNS ( ALL ( dCriticidad[Letra], dCriticidad[Prioridad], dCriticidad[Orden] ), "@t", CALCULATE ( [Aplicaciones Unicas] ) + 0, "@g", CALCULATE ( [Gobernadas] ) + 0 ), [@t] > 0 ),
+        VAR tot = [@t]
+        VAR segs =
+            CONCATENATEX ( ALL ( dEtapa[Etapa], dEtapa[Orden], dEtapa[ColorHex], dEtapa[TextoColor] ),
+                VAR n = CALCULATE ( [Aplicaciones Unicas] ) + 0
+                RETURN IF ( n = 0, "",
+                    "<div style='width:" & FORMAT ( n / tot * 100, "0.##", "en-US" ) & "%;background:" & dEtapa[ColorHex] & ";color:" & dEtapa[TextoColor] & ";display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600'>" & IF ( n / tot > 0.06, n, "" ) & "</div>" ),
+                "", dEtapa[Orden], ASC )
+        RETURN
+            "<div style='display:flex;align-items:center;gap:16px;padding:7px 0;border-bottom:1px solid #F3F5FA'>"
+                & "<div style='width:250px;flex:none'><b style='display:block;font-size:13px;font-weight:600'>" & dCriticidad[Prioridad] & "</b>"
+                & "<span style='font-size:11.5px;color:#6B7390'>" & tot & " aplicaciones · " & FORMAT ( DIVIDE ( [@g], tot ), "0%" ) & " gobernadas</span></div>"
+                & "<div style='flex:1;display:flex;gap:2px;height:26px;border-radius:8px;overflow:hidden'>" & segs & "</div></div>",
+        "", dCriticidad[Orden], ASC )
+VAR _leg = CONCATENATEX ( ALL ( dEtapa[Etapa], dEtapa[Orden], dEtapa[ColorHex], dEtapa[Leyenda] ), "<span style='margin-right:16px'><i style='display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;background:" & dEtapa[ColorHex] & "'></i>" & dEtapa[Leyenda] & "</span>", "", dEtapa[Orden], ASC )
+RETURN
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-radius:16px;padding:16px 20px;box-sizing:border-box;height:100%;color:#1B2340;'><div style='font-size:17px;font-weight:700;color:#0F265C;margin:0;'>" & "Etapa de recepción por criticidad" & "</div>" & "<div style='font-size:12px;color:#6B7390;margin:2px 0 12px 0;'>" & "Proporción de cada nivel de criticidad según su etapa en la matriz." & "</div>"
+    & _rows & "<div style='font-size:11.5px;color:#6B7390;margin-top:8px'>" & _leg & "</div>"
+    & "<div style='margin-top:14px;background:#F3F5FA;border-left:3px solid #FFDD00;border-radius:0 10px 10px 0;padding:11px 14px;font-size:12.5px;line-height:1.5'>" & [Nota Criticidad] & "</div>" & "</div>"
+
+// Página 3 · Equipos con más pendientes y cobertura por ubicación · tamaño 640 × 610 px
+HTML Apps Equipos Ubicacion =
+VAR _t = TOPN ( 10, FILTER ( ADDCOLUMNS ( VALUES ( fAplicaciones[Equipo] ), "@p", [Pendientes] + 0, "@t", [Aplicaciones Unicas] + 0, "@g", [Gobernadas] + 0 ), [@p] > 0 ), [@p], DESC, fAplicaciones[Equipo], ASC )
+VAR _mx = MAXX ( _t, [@t] )
+VAR _rows =
+    CONCATENATEX ( _t,
+        VAR segs =
+            CONCATENATEX ( ALL ( dEtapa[Etapa], dEtapa[Orden], dEtapa[ColorHex] ),
+                VAR n = CALCULATE ( [Aplicaciones Unicas] ) + 0
+                RETURN IF ( n = 0, "", "<div style='width:" & FORMAT ( n / _mx * 100, "0.##", "en-US" ) & "%;height:14px;background:" & dEtapa[ColorHex] & "'></div>" ),
+                "", dEtapa[Orden], ASC )
+        RETURN
+            "<div style='display:grid;grid-template-columns:230px 1fr 44px 46px;align-items:center;font-size:12.5px;padding:3px 0'>"
+                & "<span style='white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:10px'>" & SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( fAplicaciones[Equipo], "&", "&amp;" ), "<", "&lt;" ), ">", "&gt;" ) & "</span>"
+                & "<div style='display:flex;gap:2px'>" & segs & "</div>"
+                & "<b style='text-align:right;color:#0F265C'>" & [@p] & "</b><span style='text-align:right;color:#6B7390;font-size:11.5px'>" & FORMAT ( DIVIDE ( [@g], [@t] ), "0%" ) & "</span></div>",
+        "", [@p], DESC, fAplicaciones[Equipo], ASC )
+VAR _ub =
+    CONCATENATEX ( ADDCOLUMNS ( VALUES ( fAplicaciones[UbicacionN] ), "@t", [Aplicaciones Unicas] + 0, "@g", [Gobernadas] + 0 ),
+        "<div style='background:#F3F5FA;border-radius:10px;padding:8px 10px'><span style='display:block;font-size:11.5px;color:#6B7390'>" & SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( fAplicaciones[UbicacionN], "&", "&amp;" ), "<", "&lt;" ), ">", "&gt;" ) & "</span>"
+            & "<b style='font-size:20px;color:#0F265C;display:block'>" & FORMAT ( DIVIDE ( [@g], [@t] ), "0%" ) & "</b>"
+            & "<span style='font-size:11px;color:#6B7390'>" & [@g] & " de " & [@t] & "</span></div>",
+        "", [@t], DESC )
+RETURN
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-radius:16px;padding:16px 20px;box-sizing:border-box;height:100%;color:#1B2340;'><div style='font-size:17px;font-weight:700;color:#0F265C;margin:0;'>" & "Equipos con más aplicaciones pendientes" & "</div>" & "<div style='font-size:12px;color:#6B7390;margin:2px 0 12px 0;'>" & "Barra: aplicaciones del equipo por etapa. Número: pendientes. Porcentaje: gobernadas." & "</div>"
+    & "<div style='display:grid;grid-template-columns:230px 1fr 44px 46px;font-size:11px;color:#6B7390;padding-bottom:4px'><span>Equipo administrador</span><span></span><span style='text-align:right'>Pend.</span><span style='text-align:right'>Gob.</span></div>"
+    & _rows
+    & "<div style='font-size:17px;font-weight:700;color:#0F265C;margin:0;margin-top:14px'>Cobertura por ubicación</div>"
+    & "<div style='display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px'>" & _ub & "</div>" & "</div>"
+
+// Página 4 · Tabla criterio 1 (cartera priorizada) · tamaño 600 × 750 px
+HTML Apps Tabla Criterio 1 =
+VAR _t = CALCULATETABLE ( fAplicaciones, fAplicaciones[Etapa] = "Criterio 1", fAplicaciones[Cuenta] = 1 )
+VAR _n = COUNTROWS ( _t )
+VAR _rows =
+    CONCATENATEX ( _t,
+        VAR L = fAplicaciones[CritLetra]
+        VAR bg = LOOKUPVALUE ( dCriticidad[ColorHex], dCriticidad[Letra], L )
+        VAR fg = LOOKUPVALUE ( dCriticidad[TextoColor], dCriticidad[Letra], L )
+        VAR eq = IF ( ISBLANK ( fAplicaciones[Equipo Administrado Por] ), "—", fAplicaciones[Equipo Administrado Por] )
+        RETURN
+            "<tr><td style='padding:2.5px 8px;border-bottom:1px solid #F3F5FA'><span style='display:inline-block;width:17px;height:17px;line-height:17px;text-align:center;border-radius:6px;font-size:10px;font-weight:700;background:" & bg & ";color:" & fg & "'>" & IF ( L = "Sin dato", "–", L ) & "</span></td>"
+                & "<td style='padding:2.5px 8px;border-bottom:1px solid #F3F5FA;font-size:11.5px;font-weight:600'>" & SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( fAplicaciones[Nombre], "&", "&amp;" ), "<", "&lt;" ), ">", "&gt;" )
+                & IF ( fAplicaciones[PosibleDuplicadoGI] = 1, " <span style='font-size:10px;font-weight:500;background:#FBE3E3;color:#A42A2A;padding:1px 7px;border-radius:99px;white-space:nowrap'>ya gobernada con ID GI</span>", "" ) & "</td>"
+                & "<td style='padding:2.5px 8px;border-bottom:1px solid #F3F5FA;font-size:11.5px;color:#6B7390;max-width:210px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>" & SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( eq, "&", "&amp;" ), "<", "&lt;" ), ">", "&gt;" ) & "</td></tr>",
+        "", LOOKUPVALUE ( dCriticidad[Orden], dCriticidad[Letra], fAplicaciones[CritLetra] ), ASC, fAplicaciones[Nombre], ASC )
+RETURN
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-radius:16px;padding:16px 20px;box-sizing:border-box;height:100%;color:#1B2340;'><div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:12px'>"
+    & "<div style='font-size:17px;font-weight:700;color:#0F265C;margin:0;'>Criterio 1 · " & _n & " aplicaciones</div>"
+    & "<span style='background:#0F265C;color:#FFDD00;font-size:12px;font-weight:600;padding:5px 12px;border-radius:99px'>" & [Pill Criterio 1] & "</span></div>"
+    & "<table style='width:100%;border-collapse:collapse'><thead><tr><th style='text-align:left;font-weight:500;font-size:11.5px;color:#6B7390;background:#F3F5FA;padding:7px 10px;width:24px'></th><th style='text-align:left;font-weight:500;font-size:11.5px;color:#6B7390;background:#F3F5FA;padding:7px 10px;'>Aplicación</th><th style='text-align:left;font-weight:500;font-size:11.5px;color:#6B7390;background:#F3F5FA;padding:7px 10px;'>Equipo administrador</th></tr></thead><tbody>"
+    & IF ( _n = 0, "<tr><td colspan='3' style='padding:6px 10px;border-bottom:1px solid #F3F5FA;vertical-align:middle;color:#6B7390'>Sin aplicaciones en esta etapa.</td></tr>", _rows ) & "</tbody></table></div>"
+
+// Página 4 · Tabla criterio 2 (cartera priorizada) · tamaño 600 × 750 px
+HTML Apps Tabla Criterio 2 =
+VAR _t = CALCULATETABLE ( fAplicaciones, fAplicaciones[Etapa] = "Criterio 2", fAplicaciones[Cuenta] = 1 )
+VAR _n = COUNTROWS ( _t )
+VAR _rows =
+    CONCATENATEX ( _t,
+        VAR L = fAplicaciones[CritLetra]
+        VAR bg = LOOKUPVALUE ( dCriticidad[ColorHex], dCriticidad[Letra], L )
+        VAR fg = LOOKUPVALUE ( dCriticidad[TextoColor], dCriticidad[Letra], L )
+        VAR eq = IF ( ISBLANK ( fAplicaciones[Equipo Administrado Por] ), "—", fAplicaciones[Equipo Administrado Por] )
+        RETURN
+            "<tr><td style='padding:2.5px 8px;border-bottom:1px solid #F3F5FA'><span style='display:inline-block;width:17px;height:17px;line-height:17px;text-align:center;border-radius:6px;font-size:10px;font-weight:700;background:" & bg & ";color:" & fg & "'>" & IF ( L = "Sin dato", "–", L ) & "</span></td>"
+                & "<td style='padding:2.5px 8px;border-bottom:1px solid #F3F5FA;font-size:11.5px;font-weight:600'>" & SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( fAplicaciones[Nombre], "&", "&amp;" ), "<", "&lt;" ), ">", "&gt;" )
+                & IF ( fAplicaciones[PosibleDuplicadoGI] = 1, " <span style='font-size:10px;font-weight:500;background:#FBE3E3;color:#A42A2A;padding:1px 7px;border-radius:99px;white-space:nowrap'>ya gobernada con ID GI</span>", "" ) & "</td>"
+                & "<td style='padding:2.5px 8px;border-bottom:1px solid #F3F5FA;font-size:11.5px;color:#6B7390;max-width:210px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>" & SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( eq, "&", "&amp;" ), "<", "&lt;" ), ">", "&gt;" ) & "</td></tr>",
+        "", LOOKUPVALUE ( dCriticidad[Orden], dCriticidad[Letra], fAplicaciones[CritLetra] ), ASC, fAplicaciones[Nombre], ASC )
+RETURN
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#FFFFFF;border:1px solid #E2E6EF;border-radius:16px;padding:16px 20px;box-sizing:border-box;height:100%;color:#1B2340;'><div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:12px'>"
+    & "<div style='font-size:17px;font-weight:700;color:#0F265C;margin:0;'>Criterio 2 · " & _n & " aplicaciones</div>"
+    & "<span style='background:#0F265C;color:#FFDD00;font-size:12px;font-weight:600;padding:5px 12px;border-radius:99px'>" & [Pill Criterio 2] & "</span></div>"
+    & "<table style='width:100%;border-collapse:collapse'><thead><tr><th style='text-align:left;font-weight:500;font-size:11.5px;color:#6B7390;background:#F3F5FA;padding:7px 10px;width:24px'></th><th style='text-align:left;font-weight:500;font-size:11.5px;color:#6B7390;background:#F3F5FA;padding:7px 10px;'>Aplicación</th><th style='text-align:left;font-weight:500;font-size:11.5px;color:#6B7390;background:#F3F5FA;padding:7px 10px;'>Equipo administrador</th></tr></thead><tbody>"
+    & IF ( _n = 0, "<tr><td colspan='3' style='padding:6px 10px;border-bottom:1px solid #F3F5FA;vertical-align:middle;color:#6B7390'>Sin aplicaciones en esta etapa.</td></tr>", _rows ) & "</tbody></table></div>"
+
+// Página 4 · Nota criterio 3 · tamaño 330 × 210 px
+HTML Apps Nota Criterio 3 =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#F3F5FA;border-left:3px solid #FFDD00;border-radius:0 10px 10px 0;padding:11px 14px;font-size:12.5px;line-height:1.5;color:#1B2340'>" & [Nota Criterio 3] & "</div>"
+
+// Página 4 · Nota posibles duplicados · tamaño 330 × 200 px
+HTML Apps Nota Duplicados =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;background:#F3F5FA;border-left:3px solid #D64545;border-radius:0 10px 10px 0;padding:11px 14px;font-size:12.5px;line-height:1.5;color:#1B2340'>" & [Nota Duplicados] & "</div>"
+
+// Página 4 · Leyenda de criticidad · tamaño 330 × 170 px
+HTML Apps Leyenda Criticidad =
+"<div style='font-family:Poppins,Segoe UI,Arial,sans-serif;font-size:11.5px;color:#6B7390;background:#FFFFFF;border:1px solid #E2E6EF;border-radius:14px;padding:12px 14px'><b style='color:#0F265C;display:block;margin-bottom:6px'>Criticidad</b>"
+    & CONCATENATEX ( FILTER ( ALL ( dCriticidad ), dCriticidad[Letra] <> "Sin dato" ),
+        "<div style='padding:2px 0'><span style='display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;border-radius:6px;font-size:11px;font-weight:700;margin-right:8px;background:" & dCriticidad[ColorHex] & ";color:" & dCriticidad[TextoColor] & "'>" & dCriticidad[Letra] & "</span>" & dCriticidad[Nombre] & "</div>",
+        "", dCriticidad[Orden], ASC )
+    & "</div>"
+
