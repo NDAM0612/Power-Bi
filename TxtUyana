@@ -1,0 +1,19 @@
+Certificación de Accesos: Genéricos	Identificación de usuarios genéricos de procesos manuales y procesos automáticos (habilitar políticas de seguridad).
+Certificación de Accesos: Rotativas	Revisión proceso utilización cuentas genéricas rotativas. CAJERO ROTATIVO: 499; JEFE ROTATIVO: 195; SUPERVISOR ROTATIVO: 209
+Certificación de Accesos: Estaciones Digitales	"Estaciones Digitales (Revisión de accesos, procesos y proponer nueva metodología) Informe de ciberdefensa (plan de acción de GI) - nuevo método de autenticación."
+Certificación de Accesos: Genéricos	"Identificación de cuentas genéricas que inician sesión en las estaciones de trabajo.Caso de uso con Ciberdefensa"
+Certificación de Accesos: Accesos usuarios	Controlar el uso de cuentas de usuarios que no han iniciado sesión en 120 días. (Control con TCS).
+Certificación de Accesos: Estaciones Digitales	Integración Estaciones Digitales con Portal REN
+Certificación de Accesos: ATM	Depuración usuarios ATM
+Webmail	Eliminación de buzones en webmail, aquellos usuarios que no han hecho logueo en los ultimos 30 días; y canalizar la transferencia de buzones de los usuarios pendientes (106) En total 753 buzones.
+Usuarios Genéricos	Proyecto genéricos (identificación, responsable, funcionalidad, caducidad clave, MFA, bloqueo inicio de sesión, depuración y monitoreo).
+ 
+ 
+ 
+
+ 
+ 
+ 
+
+ 
+ 
