@@ -1,0 +1,14 @@
+Ok necesito a bordar los siguientes hitos 
+  *Certificación de Accesos: Genéricos	Identificación de usuarios genéricos de procesos manuales y procesos automáticos (habilitar políticas de seguridad).	 	Abierto	Iniciativa	Ana María Fierro
+  *No caduca contraseña	Identificación de usuarios que no caduca su contraseña y gestionar la habilitación de la política en AD para estos usuarios.	 	Abierto	Iniciativa	Yolanda León
+  *Bloqueo Login Usuario Genericos	Nuevo formulario para que en la creación de usuarios genéricos sean incluidos el grupo de Deny Logon	 	Abierto	Iniciativa	Daniel Lescano
+para lo cual utilizaremos el mismo excel llamadado analisis genericos 02092026 y asimismo para cada hito utilizaremos una hoja diferente con las siguientes condiciones
+Hito1 :Certificación de Accesos: Genéricos	Identificación de usuarios genéricos de procesos manuales y procesos automáticos (habilitar políticas de seguridad).	 	Abierto	Iniciativa	Ana María Fierro
+Hoja Hito1: Plan de ejecución, para lo cual se debe de hacer un ajustar mi Tbl_PlanSemanal con mi Tbl_Metricas debido a que el plan semanal al inicio contemplaba 2.054
+ usuarios y ahora debe de ser 2060 como indica el Tbl_Metricas con el avance.
+
+Hito2: No caduca contraseña	Identificación de usuarios que no caduca su contraseña y gestionar la habilitación de la política en AD para estos usuarios.	 	Abierto	Iniciativa	Yolanda León
+Hoja Hito2: Reporte, usando la columna EXPIRACION DE CLAVE que indica los estados de los usuarios genericos.
+
+Hito3: Bloqueo Login Usuario Genericos	Nuevo formulario para que en la creación de usuarios genéricos sean incluidos el grupo de Deny Logon	 	Abierto	Iniciativa	Daniel Lescano
+Hoja Hito3: Reporte, usando la columna Tiene bloqueo login que indica los estados sobre los usuarios genericos.
